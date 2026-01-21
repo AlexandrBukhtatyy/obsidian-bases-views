@@ -4,33 +4,55 @@ Adds three custom view types to Obsidian Bases: **Board** (Kanban), **Gantt**, a
 
 ## Features
 
-### Planned Views
+### Board View
 
-1. **Board View** 🎯
-   - Kanban-style board with vertical columns
-   - Group notes by any property (status, category, priority, etc.)
-   - Drag-and-drop cards between columns to update properties
-   - Visual card display with note information
+- Kanban-style board with vertical columns
+- Group notes by any property (status, category, priority, etc.)
+- Drag-and-drop cards between columns to update properties
+- Visual card display with note information
+- Color-coded columns
 
-2. **Gantt View** 📊
-   - Timeline visualization for project management
-   - Tasks with configurable start/end dates
-   - Resize task bars to adjust dates
-   - Auto-adjusting timeline range
+### Gantt View
 
-3. **Calendar View** 📅
-   - Monthly and weekly calendar views
-   - Events from any date property
-   - Drag events to reschedule
-   - Multiple events per day support
+- Timeline visualization for project management
+- Tasks with configurable start/end dates
+- Drag tasks horizontally to reschedule
+- Resize task bars from left/right edges to adjust dates
+- Group tasks by any property
+- Auto-adjusting timeline range
+- Visual grouping headers
+
+### Calendar View
+
+- **Month View**: Traditional monthly calendar grid
+  - Multi-day events spanning across days
+  - Drag-and-drop events to reschedule
+  - Resize multi-day events from edges
+
+- **Week View**: 7-day weekly overview
+  - Multi-day events at the top
+  - Single-day events in day cells
+  - Events sorted by length (longest first)
+
+- **Day View**: Detailed hourly schedule
+  - Vertical hourly grid (00:00 - 23:00)
+  - Current time indicator (red line)
+  - All-day events section at top
+  - Timed events positioned by start time
+  - Overlapping events displayed side-by-side (Outlook-style)
+  - Drag events vertically to change time
+  - Resize events from top/bottom edges
+  - Double-click to create new 30-minute events
 
 ### Interactive Features
 
-- ✅ **Click to open**: Open notes in Obsidian
-- ✅ **Hover preview**: Native Obsidian hover preview
-- ✅ **Drag-and-drop**: Move cards/events, resize tasks
-- ✅ **Property editing**: Updates persist to YAML frontmatter
-- ✅ **Configurable**: Select which properties to use for each view
+- **Click to open**: Open notes in Obsidian
+- **Hover preview**: Native Obsidian hover preview on all items
+- **Drag-and-drop**: Move cards/events/tasks between positions
+- **Resize**: Adjust dates by dragging edges
+- **Create events**: Double-click in day view to create new events
+- **Property editing**: All changes persist to YAML frontmatter
+- **Configurable**: Select which properties to use for dates and grouping
 
 ## Tech Stack
 
@@ -40,53 +62,6 @@ Adds three custom view types to Obsidian Bases: **Board** (Kanban), **Gantt**, a
 - **@dnd-kit**: Modern drag-and-drop
 - **date-fns**: Lightweight date utilities
 - **esbuild**: Fast bundling
-
-## Development Status
-
-### ✅ Phase 1: Foundation (Completed)
-
-- [x] Project initialization (package.json, tsconfig, manifest)
-- [x] esbuild + React + TailwindCSS 4 configuration
-- [x] ReactBasesView base class (bridges Obsidian ↔ React)
-- [x] Type definitions for Obsidian Bases API
-- [x] Plugin entry point (main.ts)
-- [x] Successful build (main.js generated)
-
-### ✅ Phase 2: Board View (Completed)
-
-- [x] BoardBasesView integration
-- [x] BoardView React component with drag-and-drop
-- [x] Column and Card components
-- [x] @dnd-kit integration for drag-and-drop
-- [x] Property updates (YAML frontmatter)
-- [x] PropertySelector component
-- [x] TailwindCSS styling
-
-### ✅ Phase 3: Gantt View (Completed)
-
-- [x] GanttBasesView integration
-- [x] GanttView React component
-- [x] Timeline, TaskBar, Grid, TaskList components
-- [x] Task resize with handles
-- [x] Date calculations and positioning
-- [x] Property updates for start/end dates
-- [x] Custom implementation (no library)
-
-### ✅ Phase 4: Calendar View (Completed)
-
-- [x] CalendarBasesView integration
-- [x] CalendarView React component
-- [x] MonthView and WeekView components
-- [x] DayCell and Event components
-- [x] ViewSwitcher for month/week toggle
-- [x] Drag-and-drop events between days
-- [x] Navigation controls (prev/next/today)
-- [x] Custom implementation (no library)
-
-### 📋 Phase 5-6: Upcoming
-
-- Phase 5: Enhancements (inline editing, performance optimization, keyboard shortcuts)
-- Phase 6: Testing & Release
 
 ## Installation (Development)
 
@@ -132,6 +107,20 @@ src/
 │   ├── board/                   # Board view (Kanban)
 │   ├── gantt/                   # Gantt view (Timeline)
 │   └── calendar/                # Calendar view
+│       ├── components/
+│       │   ├── MonthView.tsx    # Monthly calendar
+│       │   ├── WeekView.tsx     # Weekly calendar
+│       │   ├── DayView.tsx      # Daily hourly grid
+│       │   ├── DayCell.tsx      # Day cell component
+│       │   ├── Event.tsx        # Event item
+│       │   ├── MultiDayEvent.tsx # Multi-day event bar
+│       │   └── NewEventModal.ts # Event creation modal
+│       ├── hooks/
+│       │   ├── useCalendarData.ts
+│       │   ├── useEventDrag.ts
+│       │   ├── useEventResize.ts
+│       │   └── useTimedEventDrag.ts
+│       └── utils/
 ├── components/shared/           # Reusable components
 ├── utils/                       # Utilities
 ├── hooks/                       # React hooks
@@ -169,7 +158,3 @@ MIT
 - [Implementation Plan](PLAN.md) - Detailed technical plan
 - [Obsidian Bases Documentation](https://help.obsidian.md/bases)
 - [Obsidian Plugin API](https://docs.obsidian.md/)
-
----
-
-**Status**: ✅ MVP Complete (Phases 1-4 Complete) - All three views implemented and functional!
