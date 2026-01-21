@@ -5,12 +5,26 @@
 }
 
 .bv-gantt-header {
-  @apply mb-4 pb-4 border-b;
-  border-color: var(--interactive-accent);
+  @apply mb-4 pb-4 border-b flex items-center justify-between;
+  border-color: var(--background-modifier-border);
 }
 
 .bv-gantt-property-selectors {
   @apply flex gap-4;
+}
+
+/* New Task Button */
+.bv-gantt-new-task-btn {
+  @apply px-4 py-2 rounded-md text-sm font-medium cursor-pointer;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border: none;
+  transition: all 0.15s ease;
+}
+
+.bv-gantt-new-task-btn:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .bv-gantt-container {
@@ -22,19 +36,39 @@
   @apply flex flex-col border-r;
   width: 250px;
   flex-shrink: 0;
-  border-color: var(--interactive-accent);
+  border-color: var(--background-modifier-border);
 }
 
 .bv-gantt-task-list-header {
-  @apply p-3 border-b font-semibold;
+  @apply p-3 border-b font-semibold flex items-center justify-between;
   height: 60px;
-  border-color: var(--interactive-accent);
+  border-color: var(--background-modifier-border);
   background: var(--background-secondary);
   color: var(--text-normal);
 }
 
 .bv-gantt-task-list-title {
   @apply text-sm;
+}
+
+.bv-gantt-task-list-add-btn {
+  @apply w-7 h-7 rounded flex items-center justify-center text-lg cursor-pointer;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--background-modifier-border);
+  transition: all 0.15s ease;
+}
+
+.bv-gantt-task-list-add-btn:hover {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: var(--interactive-accent);
+}
+
+.bv-gantt-task-list-empty {
+  @apply flex items-center justify-center h-full p-4;
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 .bv-gantt-task-list-content {
@@ -146,6 +180,17 @@
   @apply text-sm font-medium truncate;
 }
 
+.bv-gantt-task-title-input {
+  @apply w-full text-sm font-medium bg-transparent border-none outline-none;
+  color: inherit;
+  padding: 0;
+  margin: 0;
+}
+
+.bv-gantt-task-title-input:focus {
+  outline: none;
+}
+
 /* Resize Handles */
 .bv-gantt-resize-handle {
   @apply absolute top-0 bottom-0 cursor-ew-resize;
@@ -163,4 +208,167 @@
 
 .bv-gantt-resize-right {
   @apply right-0 rounded-r;
+}
+
+/* Task bar active/dragging states */
+.bv-gantt-task-bar-active {
+  z-index: 20;
+  opacity: 0.9;
+}
+
+.bv-gantt-task-bar-dragging {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  transform: scale(1.02);
+}
+
+/* Empty state overlay */
+.bv-gantt-empty-overlay {
+  @apply absolute inset-0 flex items-center justify-center;
+  background: rgba(0, 0, 0, 0.05);
+  pointer-events: none;
+}
+
+.bv-gantt-empty-message {
+  @apply text-center p-6 rounded-lg;
+  background: var(--background-secondary);
+  border: 1px dashed var(--background-modifier-border);
+  max-width: 400px;
+  pointer-events: auto;
+}
+
+.bv-gantt-empty-icon {
+  @apply text-4xl block mb-3;
+}
+
+.bv-gantt-empty-message p {
+  @apply m-0 mb-2;
+  color: var(--text-normal);
+}
+
+.bv-gantt-empty-hint {
+  @apply text-sm;
+  color: var(--text-muted);
+}
+
+.bv-gantt-empty-hint code {
+  @apply px-1 py-0.5 rounded text-xs;
+  background: var(--background-modifier-hover);
+  color: var(--text-accent);
+}
+
+/* Timeline styling improvements */
+.bv-gantt-timeline {
+  border-color: var(--background-modifier-border);
+}
+
+/* Today marker */
+.bv-gantt-today-marker {
+  @apply absolute top-0 bottom-0 pointer-events-none;
+  width: 2px;
+  background: var(--text-error);
+  z-index: 5;
+}
+
+/* Scrollbar styling */
+.bv-gantt-chart-wrapper::-webkit-scrollbar,
+.bv-gantt-task-list-content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.bv-gantt-chart-wrapper::-webkit-scrollbar-track,
+.bv-gantt-task-list-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.bv-gantt-chart-wrapper::-webkit-scrollbar-thumb,
+.bv-gantt-task-list-content::-webkit-scrollbar-thumb {
+  background: var(--background-modifier-border);
+  border-radius: 4px;
+}
+
+.bv-gantt-chart-wrapper::-webkit-scrollbar-thumb:hover,
+.bv-gantt-task-list-content::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Group Header Styles */
+.bv-gantt-group-header {
+  @apply absolute left-0 flex items-center px-3 cursor-pointer;
+  height: 40px;
+  background: var(--background-secondary);
+  border-bottom: 1px solid var(--background-modifier-border);
+  z-index: 5;
+  transition: background-color 0.15s ease;
+}
+
+.bv-gantt-group-header:hover {
+  background: var(--background-modifier-hover);
+}
+
+.bv-gantt-group-toggle {
+  @apply flex items-center justify-center mr-2;
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+
+.bv-gantt-group-toggle svg {
+  width: 12px;
+  height: 12px;
+  color: var(--text-muted);
+}
+
+.bv-gantt-group-toggle-collapsed {
+  transform: rotate(-90deg);
+}
+
+.bv-gantt-group-name {
+  @apply font-semibold text-sm flex-1;
+  color: var(--text-normal);
+}
+
+.bv-gantt-group-name-input {
+  @apply font-semibold text-sm flex-1 bg-transparent border-none outline-none;
+  color: var(--text-normal);
+  padding: 2px 4px;
+  margin: -2px -4px;
+  border-radius: 4px;
+  background: var(--background-primary);
+}
+
+.bv-gantt-group-name-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--interactive-accent);
+}
+
+.bv-gantt-group-count {
+  @apply text-xs px-2 py-0.5 rounded-full;
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
+}
+
+/* Task List Group Styles */
+.bv-gantt-task-list-group {
+  @apply absolute flex items-center px-2 cursor-pointer;
+  width: 100%;
+  height: 40px;
+  background: var(--background-secondary);
+  border-bottom: 1px solid var(--background-modifier-border);
+  transition: background-color 0.15s ease;
+}
+
+.bv-gantt-task-list-group:hover {
+  background: var(--background-modifier-hover);
+}
+
+.bv-gantt-task-list-group-name {
+  @apply font-semibold text-sm flex-1 truncate;
+  color: var(--text-normal);
+}
+
+.bv-gantt-task-list-group-count {
+  @apply text-xs px-2 py-0.5 rounded-full ml-2;
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
 }

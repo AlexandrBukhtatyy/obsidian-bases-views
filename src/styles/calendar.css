@@ -10,33 +10,32 @@
   border-color: var(--interactive-accent);
 }
 
-.bv-calendar-property-selector {
-  @apply flex-shrink-0;
-  min-width: 200px;
-}
-
 .bv-calendar-controls {
-  @apply flex items-center gap-3 flex-1 justify-center;
+  @apply flex items-center gap-3;
 }
 
 .bv-calendar-nav-button {
   @apply px-3 py-1 rounded cursor-pointer border;
   background: var(--background-secondary);
-  border-color: var(--interactive-accent);
+  border-color: var(--background-modifier-border);
   color: var(--text-normal);
   transition: background 0.2s ease;
 }
 
 .bv-calendar-nav-button:hover {
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
+  background: var(--background-modifier-hover);
 }
 
 .bv-calendar-today-button {
-  @apply px-4 py-1 rounded cursor-pointer;
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-  font-weight: 500;
+  @apply px-4 py-1 rounded cursor-pointer border;
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  border-color: var(--background-modifier-border);
+  transition: background 0.2s ease;
+}
+
+.bv-calendar-today-button:hover {
+  background: var(--background-modifier-hover);
 }
 
 .bv-calendar-title {
@@ -48,16 +47,14 @@
 
 /* View Switcher */
 .bv-calendar-view-switcher {
-  @apply flex gap-1 rounded border;
-  border-color: var(--interactive-accent);
-  overflow: hidden;
+  @apply flex gap-1;
 }
 
 .bv-calendar-view-button {
-  @apply px-3 py-1 cursor-pointer;
+  @apply px-3 py-1 cursor-pointer rounded border;
   background: var(--background-secondary);
   color: var(--text-normal);
-  border: none;
+  border-color: var(--background-modifier-border);
   transition: background 0.2s ease;
 }
 
@@ -98,8 +95,64 @@
 }
 
 .bv-calendar-week-row {
-  @apply flex flex-1 border-b;
+  @apply flex flex-col border-b;
   border-color: var(--background-modifier-border);
+  min-height: 100px;
+  position: relative;
+}
+
+/* Full-column drag-over highlight */
+.bv-calendar-day-highlight {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--interactive-accent) 20%, transparent);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Vertical day separators - spans full height of week row */
+.bv-calendar-week-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 2;
+  background-image: repeating-linear-gradient(
+    to right,
+    transparent 0,
+    transparent calc(14.2857% - 0.5px),
+    var(--background-modifier-border) calc(14.2857% - 0.5px),
+    var(--background-modifier-border) 14.2857%
+  );
+  background-position: 14.2857% 0;
+  background-size: 100% 100%;
+}
+
+.bv-calendar-day-numbers-row {
+  @apply flex;
+  background: var(--background-primary);
+}
+
+.bv-calendar-day-numbers-row .bv-calendar-day-number {
+  @apply flex-1 text-center p-2 text-sm font-medium;
+  color: var(--text-normal);
+}
+
+.bv-calendar-day-numbers-row .bv-calendar-day-number.bv-calendar-day-other-month {
+  opacity: 0.4;
+}
+
+.bv-calendar-day-numbers-row .bv-calendar-day-number.bv-calendar-day-today {
+  color: var(--interactive-accent);
+  font-weight: 600;
+}
+
+.bv-calendar-days-row {
+  @apply flex flex-1;
 }
 
 .bv-calendar-week-grid {
@@ -108,28 +161,18 @@
 
 /* Day Cell */
 .bv-calendar-day-cell {
-  @apply flex-1 flex flex-col p-2 border-r;
+  @apply flex-1 flex flex-col p-2;
   min-height: 100px;
-  border-color: var(--background-modifier-border);
   background: var(--background-primary);
   transition: background 0.2s ease;
-}
-
-.bv-calendar-day-cell:last-child {
-  border-right: none;
 }
 
 .bv-calendar-day-other-month {
   opacity: 0.4;
 }
 
-.bv-calendar-day-today {
-  background: var(--background-modifier-hover);
-}
-
-.bv-calendar-day-drag-over {
-  background: var(--interactive-accent);
-  opacity: 0.2;
+.bv-calendar-day-cell.bv-calendar-day-today {
+  background: var(--background-primary);
 }
 
 .bv-calendar-day-number {
@@ -139,8 +182,7 @@
 
 .bv-calendar-day-today .bv-calendar-day-number {
   @apply rounded px-2 py-1;
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
+  color: var(--text-normal);
   display: inline-block;
 }
 
@@ -156,7 +198,8 @@
 
 /* Event */
 .bv-calendar-event {
-  @apply px-2 py-1 rounded cursor-pointer text-xs truncate;
+  @apply px-2 rounded cursor-pointer text-xs truncate flex items-center;
+  height: 20px;
   background: var(--interactive-accent);
   color: var(--text-on-accent);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -167,6 +210,317 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.bv-calendar-event.bv-event-active {
+  opacity: 0.4;
+  box-shadow: none;
+  transform: none;
+}
+
 .bv-calendar-event-title {
   @apply truncate;
+}
+
+/* Multi-day Events Row */
+.bv-calendar-multi-day-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 22px;
+  row-gap: 2px;
+  padding: 2px 0;
+}
+
+/* Multi-day Event Bar */
+.bv-calendar-multi-day-event {
+  @apply flex items-center rounded;
+  height: 20px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  font-size: 11px;
+  font-weight: 500;
+  transition: box-shadow 0.15s ease;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  z-index: 1;
+  position: relative;
+}
+
+.bv-calendar-multi-day-event:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+}
+
+.bv-calendar-multi-day-event.bv-event-active {
+  z-index: 999;
+  opacity: 0.4;
+  box-shadow: none;
+}
+
+.bv-calendar-multi-day-event-title {
+  @apply truncate;
+}
+
+/* Event content - draggable area */
+.bv-calendar-event-content {
+  @apply flex-1 flex items-center px-2 truncate;
+  min-width: 0;
+}
+
+/* Resize handles for events */
+.bv-calendar-event-resize-handle {
+  @apply absolute top-0 bottom-0;
+  width: 8px;
+  cursor: ew-resize;
+  z-index: 10;
+}
+
+.bv-calendar-event-resize-handle:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.bv-calendar-event-resize-left {
+  @apply left-0 rounded-l;
+}
+
+.bv-calendar-event-resize-right {
+  @apply right-0 rounded-r;
+}
+
+/* Continuation indicators */
+.bv-calendar-multi-day-event.bv-continues-before {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  margin-left: -2px;
+  padding-left: 6px;
+}
+
+.bv-calendar-multi-day-event.bv-continues-before::before {
+  content: '◀';
+  font-size: 8px;
+  margin-right: 4px;
+  opacity: 0.7;
+}
+
+.bv-calendar-multi-day-event.bv-continues-after {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  margin-right: -2px;
+  padding-right: 6px;
+}
+
+.bv-calendar-multi-day-event.bv-continues-after::after {
+  content: '▶';
+  font-size: 8px;
+  margin-left: 4px;
+  opacity: 0.7;
+}
+
+/* Phantom element for drag/resize preview - shows projected size */
+.bv-calendar-event-phantom {
+  pointer-events: none;
+  background: var(--interactive-accent);
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.bv-calendar-event-phantom:hover {
+  transform: none;
+}
+
+/* Phantom for single-day events */
+.bv-calendar-event.bv-calendar-event-phantom {
+  position: absolute;
+  top: 0;
+  left: 0;
+  min-width: 100%;
+}
+
+/* Phantom for multi-day events in grid */
+.bv-calendar-multi-day-event.bv-calendar-event-phantom {
+  position: relative;
+}
+
+/* Day View */
+.bv-calendar-day-view {
+  @apply flex-1 flex flex-col;
+  overflow: hidden;
+}
+
+/* All-day events section */
+.bv-calendar-day-allday-section {
+  @apply flex border-b;
+  border-color: var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+
+.bv-calendar-day-allday-label {
+  @apply flex items-center justify-center text-xs font-medium;
+  width: 60px;
+  min-width: 60px;
+  color: var(--text-muted);
+  border-right: 1px solid var(--background-modifier-border);
+}
+
+.bv-calendar-day-allday-events {
+  @apply flex-1 flex flex-wrap gap-1 p-2;
+}
+
+.bv-calendar-day-allday-event {
+  @apply px-3 py-1 rounded cursor-pointer text-sm flex items-center gap-2;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bv-calendar-day-allday-event:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.bv-calendar-day-allday-event-title {
+  @apply font-medium;
+}
+
+.bv-calendar-day-allday-event-dates {
+  @apply text-xs flex items-center gap-1;
+  opacity: 0.85;
+}
+
+.bv-calendar-day-event-multiday {
+  border-left: 3px solid rgba(255, 255, 255, 0.5);
+}
+
+.bv-calendar-day-event-badge {
+  @apply px-1.5 py-0.5 rounded text-xs;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Hourly grid container */
+.bv-calendar-day-grid-container {
+  @apply flex-1 overflow-y-auto;
+}
+
+.bv-calendar-day-grid {
+  @apply flex;
+  min-height: calc(24 * 60px); /* 24 hours * 60px per hour */
+}
+
+/* Time labels column */
+.bv-calendar-day-time-column {
+  @apply flex flex-col;
+  width: 60px;
+  min-width: 60px;
+  border-right: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+
+.bv-calendar-day-time-label {
+  @apply flex items-start justify-end pr-2 text-xs;
+  color: var(--text-muted);
+  transform: translateY(-0.5em);
+}
+
+.bv-calendar-day-time-label:first-child {
+  transform: none;
+  padding-top: 4px;
+}
+
+/* Events column */
+.bv-calendar-day-events-column {
+  @apply flex-1 relative;
+  background: var(--background-primary);
+}
+
+/* Hour lines */
+.bv-calendar-day-hour-line {
+  @apply absolute left-0 right-0;
+  height: 1px;
+  background: var(--background-modifier-border);
+}
+
+/* Current time indicator */
+.bv-calendar-day-current-time {
+  @apply absolute left-0 right-0;
+  height: 2px;
+  background: var(--text-error);
+  z-index: 10;
+}
+
+.bv-calendar-day-current-time::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-error);
+}
+
+/* Timed events */
+.bv-calendar-day-timed-event {
+  @apply absolute rounded;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  overflow: hidden;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.bv-calendar-day-timed-event:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.bv-calendar-day-timed-event.bv-event-active {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.bv-calendar-day-timed-event-content {
+  @apply flex items-center gap-1 px-2 py-1;
+  pointer-events: none;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.bv-calendar-day-timed-event-time {
+  @apply text-xs whitespace-nowrap;
+  opacity: 0.85;
+}
+
+.bv-calendar-day-timed-event-separator {
+  @apply text-xs;
+  opacity: 0.6;
+}
+
+.bv-calendar-day-timed-event-title {
+  @apply font-medium text-sm truncate;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Resize handles for timed events */
+.bv-calendar-day-event-resize-handle {
+  @apply absolute left-0 right-0;
+  height: 8px;
+  cursor: ns-resize;
+  z-index: 10;
+}
+
+.bv-calendar-day-event-resize-handle:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.bv-calendar-day-event-resize-top {
+  @apply top-0 rounded-t;
+}
+
+.bv-calendar-day-event-resize-bottom {
+  @apply bottom-0 rounded-b;
+}
+
+/* Empty state */
+.bv-calendar-day-empty {
+  @apply absolute inset-0 flex items-center justify-center text-center;
+  color: var(--text-muted);
+  font-style: italic;
 }

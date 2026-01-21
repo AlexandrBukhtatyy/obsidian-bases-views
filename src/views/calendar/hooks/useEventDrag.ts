@@ -4,6 +4,7 @@ import { parseISO } from 'date-fns';
 import { App } from 'obsidian';
 import { CalendarEvent } from '../../../types/view-config';
 import { usePropertyUpdate } from '../../../hooks/usePropertyUpdate';
+import { formatDateString } from '../utils/dateUtils';
 
 /**
  * Hook for event drag-and-drop functionality.
@@ -44,9 +45,10 @@ export function useEventDrag(
         const newDate = parseISO(newDateString);
 
         // Only update if date actually changed
-        const oldDateString = calendarEvent.date.toISOString().split('T')[0];
+        const oldDateString = formatDateString(calendarEvent.date);
         if (oldDateString !== newDateString) {
-          updateProperty(calendarEvent.file, dateProperty, newDate.toISOString());
+          // Write in YYYY-MM-DD format to preserve local date
+          updateProperty(calendarEvent.file, dateProperty, newDateString);
         }
       } catch (error) {
         console.error('Failed to parse new date:', error);

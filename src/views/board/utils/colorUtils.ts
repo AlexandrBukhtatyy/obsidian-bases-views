@@ -1,6 +1,7 @@
 /**
- * Color utilities for Board view.
+ * Color utilities for Board view - Notion-style.
  * Generates consistent colors for status badges based on value hash.
+ * Optimized for dark theme with vibrant, saturated colors.
  */
 
 export interface BadgeColors {
@@ -21,22 +22,44 @@ function hashString(str: string): number {
 }
 
 /**
- * Generate consistent HSL colors from a string value.
+ * Notion-style color palette for badges.
+ * These are the primary Notion colors, optimized for dark theme.
+ */
+const NOTION_COLORS: BadgeColors[] = [
+  // Red/Pink
+  { background: 'rgba(255, 115, 105, 0.5)', text: '#ff7369', border: 'rgba(255, 115, 105, 0.3)' },
+  // Orange
+  { background: 'rgba(255, 163, 68, 0.5)', text: '#ffa344', border: 'rgba(255, 163, 68, 0.3)' },
+  // Yellow
+  { background: 'rgba(255, 220, 73, 0.5)', text: '#ffdc49', border: 'rgba(255, 220, 73, 0.3)' },
+  // Green
+  { background: 'rgba(77, 171, 154, 0.5)', text: '#4dab9a', border: 'rgba(77, 171, 154, 0.3)' },
+  // Blue
+  { background: 'rgba(82, 156, 202, 0.5)', text: '#529cca', border: 'rgba(82, 156, 202, 0.3)' },
+  // Purple
+  { background: 'rgba(154, 109, 215, 0.5)', text: '#9a6dd7', border: 'rgba(154, 109, 215, 0.3)' },
+  // Pink
+  { background: 'rgba(226, 85, 161, 0.5)', text: '#e255a1', border: 'rgba(226, 85, 161, 0.3)' },
+  // Brown
+  { background: 'rgba(147, 114, 100, 0.5)', text: '#937264', border: 'rgba(147, 114, 100, 0.3)' },
+  // Teal
+  { background: 'rgba(68, 131, 170, 0.5)', text: '#4483aa', border: 'rgba(68, 131, 170, 0.3)' },
+  // Coral
+  { background: 'rgba(255, 134, 111, 0.5)', text: '#ff866f', border: 'rgba(255, 134, 111, 0.3)' },
+  // Lime
+  { background: 'rgba(133, 211, 108, 0.5)', text: '#85d36c', border: 'rgba(133, 211, 108, 0.3)' },
+  // Violet
+  { background: 'rgba(130, 80, 223, 0.5)', text: '#8250df', border: 'rgba(130, 80, 223, 0.3)' },
+];
+
+/**
+ * Generate consistent colors from a string value using Notion palette.
  * Same value always produces same color.
  */
 export function generateColorFromValue(value: string): BadgeColors {
   const hash = hashString(value);
-
-  // Map to hue (0-360), keep saturation and lightness in pleasant range
-  const hue = hash % 360;
-  const saturation = 55 + (hash >> 8) % 25; // 55-80%
-  const lightness = 88 + (hash >> 16) % 7; // 88-95% for background
-
-  return {
-    background: `hsl(${hue}, ${saturation}%, ${lightness}%)`,
-    text: `hsl(${hue}, ${saturation}%, 30%)`,
-    border: `hsl(${hue}, ${saturation}%, ${lightness - 15}%)`,
-  };
+  const colorIndex = hash % NOTION_COLORS.length;
+  return NOTION_COLORS[colorIndex];
 }
 
 /**
@@ -45,19 +68,19 @@ export function generateColorFromValue(value: string): BadgeColors {
  */
 const PREDEFINED_COLORS: Record<string, BadgeColors> = {
   'No Status': {
-    background: 'var(--background-modifier-hover)',
+    background: 'rgba(128, 128, 128, 0.3)',
     text: 'var(--text-muted)',
-    border: 'var(--background-modifier-border)',
+    border: 'rgba(128, 128, 128, 0.2)',
   },
   'Uncategorized': {
-    background: 'var(--background-modifier-hover)',
+    background: 'rgba(128, 128, 128, 0.3)',
     text: 'var(--text-muted)',
-    border: 'var(--background-modifier-border)',
+    border: 'rgba(128, 128, 128, 0.2)',
   },
   'No Category': {
-    background: 'var(--background-modifier-hover)',
+    background: 'rgba(128, 128, 128, 0.3)',
     text: 'var(--text-muted)',
-    border: 'var(--background-modifier-border)',
+    border: 'rgba(128, 128, 128, 0.2)',
   },
 };
 

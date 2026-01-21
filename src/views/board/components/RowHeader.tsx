@@ -20,10 +20,11 @@ export const RowHeader: React.FC<RowHeaderProps> = ({
 }) => {
   return (
     <div className="bv-row-header" onClick={onToggle}>
-      <span className={`bv-row-toggle ${isCollapsed ? 'bv-collapsed' : ''}`}>
+      <span
+        className={`bv-row-header-toggle ${isCollapsed ? 'bv-row-header-toggle-collapsed' : ''}`}
+      >
         <svg
           viewBox="0 0 12 12"
-          className="bv-toggle-icon"
           fill="none"
           stroke="currentColor"
           strokeWidth="1.5"
@@ -31,8 +32,9 @@ export const RowHeader: React.FC<RowHeaderProps> = ({
           <path d="M3 4.5 L6 7.5 L9 4.5" />
         </svg>
       </span>
-      <StatusBadge value={title} size="sm" />
-      <span className="bv-row-count">{count}</span>
+      <div className="bv-row-header-content">
+        <StatusBadge value={title} count={count} size="sm" />
+      </div>
     </div>
   );
 };

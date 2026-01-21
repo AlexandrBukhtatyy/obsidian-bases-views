@@ -1,4 +1,18 @@
-import { format, addMonths, subMonths, addWeeks, subWeeks } from 'date-fns';
+import { format, addMonths, subMonths, addWeeks, subWeeks, addDays, subDays } from 'date-fns';
+
+/**
+ * Format a date as YYYY-MM-DD string in local timezone.
+ * Used for droppable IDs and date comparisons.
+ *
+ * @param date - Date to format
+ * @returns Date string in YYYY-MM-DD format
+ */
+export function formatDateString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 /**
  * Format a date for display in calendar header.
@@ -87,4 +101,34 @@ export function previousWeek(currentDate: Date): Date {
  */
 export function nextWeek(currentDate: Date): Date {
   return addWeeks(currentDate, 1);
+}
+
+/**
+ * Navigate to previous day.
+ *
+ * @param currentDate - Current date
+ * @returns Date one day earlier
+ */
+export function previousDay(currentDate: Date): Date {
+  return subDays(currentDate, 1);
+}
+
+/**
+ * Navigate to next day.
+ *
+ * @param currentDate - Current date
+ * @returns Date one day later
+ */
+export function nextDay(currentDate: Date): Date {
+  return addDays(currentDate, 1);
+}
+
+/**
+ * Format a date for display in day view header.
+ *
+ * @param date - Date to format
+ * @returns Formatted string (e.g., "Monday, January 21, 2026")
+ */
+export function formatFullDate(date: Date): string {
+  return format(date, 'EEEE, MMMM d, yyyy');
 }

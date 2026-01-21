@@ -1,31 +1,74 @@
 import React from 'react';
 import { App, HoverParent } from 'obsidian';
+import { useDndMonitor } from '@dnd-kit/core';
 import { CalendarEvent } from '../../../types/view-config';
 import { DayCell } from './DayCell';
-import { generateWeekDays, getEventsForDay } from '../utils/calendarHelpers';
-import { formatWeekday } from '../utils/dateUtils';
+import { MultiDayEvent } from './MultiDayEvent';
+import {
+  generateWeekDays,
+  getEventsForDay,
+  getMultiDayEventsForWeek,
+  calculateEventSpanInWeek,
+} from '../utils/calendarHelpers';
+import { formatWeekday, formatDateString } from '../utils/dateUtils';
 
 interface WeekViewProps {
   currentDate: Date;
   events: CalendarEvent[];
   app: App;
   hoverParent: HoverParent;
+  dateProperty: string;
+  endDateProperty: string;
 }
 
 /**
  * WeekView component displaying a weekly calendar.
  * Shows 7 days (Sunday to Saturday) with events.
+ * Multi-day events are displayed at the top of the week.
  */
 export const WeekView: React.FC<WeekViewProps> = ({
   currentDate,
   events,
   app,
   hoverParent,
+  dateProperty,
+  endDateProperty,
 }) => {
   const days = generateWeekDays(currentDate);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  // Track which date is being dragged over for full-column highlighting
+  const [dragOverDate, setDragOverDate] = React.useState<string | null>(null);
+  // Counter to force re-sort after resize/drag ends
+  const [sortVersion, setSortVersion] = React.useState(0);
+
+  // Callback to trigger re-sort after interaction ends
+  const handleInteractionEnd = React.useCallback(() => {
+    setTimeout(() => {
+      setSortVersion(v => v + 1);
+    }, 50);
+  }, []);
+
+  useDndMonitor({
+    onDragOver(event) {
+      const overId = event.over?.id as string | null;
+      setDragOverDate(overId);
+    },
+    onDragEnd() {
+      setDragOverDate(null);
+    },
+    onDragCancel() {
+      setDragOverDate(null);
+    },
+  });
+
+  // Memoize multi-day events to prevent re-sorting during drag
+  const multiDayEvents = React.useMemo(() => {
+    return getMultiDayEventsForWeek(events, days);
+  }, [events, days, sortVersion]);
 
   return (
-    <div className="bv-calendar-week-view">
+    <div className="bv-calendar-week-view" ref={containerRef}>
       {/* Weekday header */}
       <div className="bv-calendar-weekday-header">
         {days.map((day) => (
@@ -35,22 +78,85 @@ export const WeekView: React.FC<WeekViewProps> = ({
         ))}
       </div>
 
-      {/* Week grid */}
-      <div className="bv-calendar-week-grid">
-        {days.map((day) => {
-          const dayEvents = getEventsForDay(events, day);
-
+      {/* Week row with multi-day events and day cells */}
+      <div className="bv-calendar-week-row">
+        {/* Full-column drag-over highlights */}
+        {days.map((day, dayIndex) => {
+          const dateStr = formatDateString(day);
+          const isDragOver = dragOverDate === dateStr;
+          if (!isDragOver) return null;
           return (
-            <DayCell
-              key={day.toISOString()}
-              date={day}
-              events={dayEvents}
-              isCurrentMonth={true} // All days are visible in week view
-              app={app}
-              hoverParent={hoverParent}
+            <div
+              key={`highlight-${dateStr}`}
+              className="bv-calendar-day-highlight"
+              style={{ left: `${(dayIndex / 7) * 100}%`, width: `${100 / 7}%` }}
             />
           );
         })}
+
+        {/* Day numbers row */}
+        <div className="bv-calendar-day-numbers-row">
+          {days.map((day) => {
+            const dateStr = formatDateString(day);
+            const isToday = day.toDateString() === new Date().toDateString();
+            return (
+              <div
+                key={dateStr}
+                className={`bv-calendar-day-number ${isToday ? 'bv-calendar-day-today' : ''}`}
+              >
+                {day.getDate()}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Multi-day events layer */}
+        {multiDayEvents.length > 0 && (
+          <div className="bv-calendar-multi-day-row">
+            {multiDayEvents.map((event, eventIndex) => {
+              const span = calculateEventSpanInWeek(event, days);
+              return (
+                <MultiDayEvent
+                  key={event.id}
+                  event={event}
+                  startCol={span.startCol}
+                  colSpan={span.colSpan}
+                  row={eventIndex}
+                  continuesBefore={span.continuesBefore}
+                  continuesAfter={span.continuesAfter}
+                  app={app}
+                  hoverParent={hoverParent}
+                  containerRef={containerRef}
+                  dateProperty={dateProperty}
+                  endDateProperty={endDateProperty}
+                  onInteractionEnd={handleInteractionEnd}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {/* Day cells with single-day events */}
+        <div className="bv-calendar-days-row">
+          {days.map((day) => {
+            const dayEvents = getEventsForDay(events, day);
+
+            return (
+              <DayCell
+                key={formatDateString(day)}
+                date={day}
+                events={dayEvents}
+                isCurrentMonth={true}
+                app={app}
+                hoverParent={hoverParent}
+                showDayNumber={false}
+                containerRef={containerRef}
+                dateProperty={dateProperty}
+                endDateProperty={endDateProperty}
+              />
+            );
+          })}
+        </div>
       </div>
     </div>
   );

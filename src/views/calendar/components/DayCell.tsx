@@ -1,9 +1,9 @@
-import React from 'react';
+import * as React from 'react';
 import { App, HoverParent } from 'obsidian';
 import { useDroppable } from '@dnd-kit/core';
 import { CalendarEvent } from '../../../types/view-config';
 import { Event } from './Event';
-import { formatDayNumber } from '../utils/dateUtils';
+import { formatDayNumber, formatDateString } from '../utils/dateUtils';
 import { isDayInMonth, isDayToday } from '../utils/calendarHelpers';
 
 interface DayCellProps {
@@ -12,6 +12,10 @@ interface DayCellProps {
   isCurrentMonth: boolean;
   app: App;
   hoverParent: HoverParent;
+  showDayNumber?: boolean;
+  containerRef: React.RefObject<HTMLElement>;
+  dateProperty: string;
+  endDateProperty: string;
 }
 
 /**
@@ -24,8 +28,12 @@ export const DayCell: React.FC<DayCellProps> = ({
   isCurrentMonth,
   app,
   hoverParent,
+  showDayNumber = true,
+  containerRef,
+  dateProperty,
+  endDateProperty,
 }) => {
-  const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD
+  const dateString = formatDateString(date); // YYYY-MM-DD in local timezone
   const { setNodeRef, isOver } = useDroppable({
     id: dateString,
   });
@@ -37,15 +45,23 @@ export const DayCell: React.FC<DayCellProps> = ({
       ref={setNodeRef}
       className={`bv-calendar-day-cell ${
         !isCurrentMonth ? 'bv-calendar-day-other-month' : ''
-      } ${isToday ? 'bv-calendar-day-today' : ''} ${
-        isOver ? 'bv-calendar-day-drag-over' : ''
-      }`}
+      } ${isToday ? 'bv-calendar-day-today' : ''}`}
     >
-      <div className="bv-calendar-day-number">{formatDayNumber(date)}</div>
+      {showDayNumber && (
+        <div className="bv-calendar-day-number">{formatDayNumber(date)}</div>
+      )}
 
       <div className="bv-calendar-day-events">
         {events.map((event) => (
-          <Event key={event.id} event={event} app={app} hoverParent={hoverParent} />
+          <Event
+            key={event.id}
+            event={event}
+            app={app}
+            hoverParent={hoverParent}
+            containerRef={containerRef}
+            dateProperty={dateProperty}
+            endDateProperty={endDateProperty}
+          />
         ))}
 
         {events.length === 0 && isOver && (

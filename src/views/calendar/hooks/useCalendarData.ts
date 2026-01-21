@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { App, BasesQueryResult } from 'obsidian';
 import { adaptBasesData } from '../../../utils/basesDataAdapter';
 import { entriesToEvents } from '../utils/calendarHelpers';
-import { CalendarEvent } from '../../../types/view-config';
 
 /**
  * Hook for Calendar view data management.
@@ -11,35 +10,38 @@ import { CalendarEvent } from '../../../types/view-config';
  * @param data - Data from Bases API (BasesQueryResult)
  * @param app - Obsidian app instance
  * @param initialDateProperty - Initial date property
- * @param initialViewMode - Initial view mode (month/week)
+ * @param initialEndDateProperty - Initial end date property (optional, for multi-day events)
+ * @param initialViewMode - Initial view mode (month/week/day)
  * @returns Object with events, date property, and view mode management
  */
 export function useCalendarData(
   data: BasesQueryResult,
   app: App,
   initialDateProperty: string,
-  initialViewMode: 'month' | 'week'
+  initialEndDateProperty: string | undefined,
+  initialViewMode: 'month' | 'week' | 'day'
 ) {
-  const [dateProperty, setDateProperty] = useState(initialDateProperty || 'date');
-  const [viewMode, setViewMode] = useState<'month' | 'week'>(initialViewMode || 'month');
+  const [dateProperty, setDateProperty] = useState(initialDateProperty || 'start');
+  const [endDateProperty, setEndDateProperty] = useState(initialEndDateProperty || 'end');
+  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>(initialViewMode || 'month');
   const [currentDate, setCurrentDate] = useState(new Date());
 
   // Transform Bases data to our internal format
   const entries = useMemo(() => {
-    console.log('useCalendarData: processing data:', data);
-    console.log('useCalendarData: data.data length:', data?.data?.length);
     return adaptBasesData(data, app);
   }, [data, app]);
 
   // Convert entries to events with date filtering
   const events = useMemo(() => {
-    return entriesToEvents(entries, dateProperty);
-  }, [entries, dateProperty]);
+    return entriesToEvents(entries, dateProperty, endDateProperty || undefined);
+  }, [entries, dateProperty, endDateProperty]);
 
   return {
     events,
     dateProperty,
     setDateProperty,
+    endDateProperty,
+    setEndDateProperty,
     viewMode,
     setViewMode,
     currentDate,

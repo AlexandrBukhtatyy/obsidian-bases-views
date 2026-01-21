@@ -7,8 +7,11 @@ import {
   isSameMonth,
   isSameDay,
   isToday,
-  addDays,
-  subDays,
+  isWithinInterval,
+  isBefore,
+  isAfter,
+  startOfDay,
+  endOfDay,
 } from 'date-fns';
 import { BasesEntry, CalendarEvent } from '../../../types/view-config';
 import { parseISO, isValid } from 'date-fns';
@@ -51,42 +54,46 @@ export function generateWeekDays(currentDate: Date): Date[] {
  * Filters entries that have a valid date property.
  *
  * @param entries - Array of entries
- * @param dateProperty - Property name for the date
+ * @param dateProperty - Property name for the start date
+ * @param endDateProperty - Optional property name for the end date
  * @returns Array of calendar events
  */
 export function entriesToEvents(
   entries: BasesEntry[],
-  dateProperty: string
+  dateProperty: string,
+  endDateProperty?: string
 ): CalendarEvent[] {
   const events: CalendarEvent[] = [];
 
-  console.log('entriesToEvents: processing', entries.length, 'entries');
-  console.log('entriesToEvents: looking for dateProperty:', dateProperty);
-
-  entries.forEach((entry, index) => {
-    console.log(`entriesToEvents: entry ${index}:`, entry);
-    console.log(`entriesToEvents: entry ${index} properties:`, entry.properties);
-
-    const dateValue = entry.properties[dateProperty];
-    console.log(`entriesToEvents: entry ${index} dateValue for '${dateProperty}':`, dateValue);
-
+  entries.forEach((entry) => {
+    // Try primary date property first, then fallback to 'date'
+    let dateValue = entry.properties[dateProperty];
+    if (!dateValue && dateProperty !== 'date') {
+      dateValue = entry.properties['date'];
+    }
     const date = parseDate(dateValue);
-    console.log(`entriesToEvents: entry ${index} parsed date:`, date);
 
     if (date) {
+      // Parse end date if property is specified
+      let endDate: Date | undefined;
+      if (endDateProperty) {
+        const endDateValue = entry.properties[endDateProperty];
+        const parsedEndDate = parseDate(endDateValue);
+        if (parsedEndDate && parsedEndDate > date) {
+          endDate = parsedEndDate;
+        }
+      }
+
       events.push({
         id: entry.id,
         file: entry.file,
         title: entry.file.basename,
         date,
+        endDate,
       });
-      console.log(`entriesToEvents: ✓ added event for entry ${index}`);
-    } else {
-      console.log(`entriesToEvents: ✗ skipped entry ${index} - no valid date`);
     }
   });
 
-  console.log('entriesToEvents: returning', events.length, 'events');
   return events;
 }
 
@@ -111,6 +118,23 @@ function parseDate(value: any): Date | null {
   if (typeof value === 'number') {
     const parsed = new Date(value);
     return isValid(parsed) ? parsed : null;
+  }
+
+  // Handle DateTime objects (Luxon, moment, etc.)
+  if (typeof value === 'object') {
+    // Luxon DateTime has ts property
+    if (value.ts && typeof value.ts === 'number') {
+      return new Date(value.ts);
+    }
+    // moment has toDate method
+    if (typeof value.toDate === 'function') {
+      return value.toDate();
+    }
+    // Has toISOString method
+    if (typeof value.toISOString === 'function') {
+      const parsed = parseISO(value.toISOString());
+      return isValid(parsed) ? parsed : null;
+    }
   }
 
   return null;
@@ -138,14 +162,136 @@ export function groupEventsByDate(
 }
 
 /**
- * Get events for a specific day.
+ * Check if an event is a multi-day event.
+ *
+ * @param event - Event to check
+ * @returns True if event spans multiple days
+ */
+export function isMultiDayEvent(event: CalendarEvent): boolean {
+  return !!event.endDate && !isSameDay(event.date, event.endDate);
+}
+
+/**
+ * Check if a day falls within a multi-day event's range.
+ *
+ * @param event - Event to check
+ * @param day - Day to check
+ * @returns True if day is within event range
+ */
+export function isDayInEventRange(event: CalendarEvent, day: Date): boolean {
+  if (!event.endDate) {
+    return isSameDay(event.date, day);
+  }
+
+  const dayStart = startOfDay(day);
+  const eventStart = startOfDay(event.date);
+  const eventEnd = endOfDay(event.endDate);
+
+  return isWithinInterval(dayStart, { start: eventStart, end: eventEnd });
+}
+
+/**
+ * Get single-day events for a specific day (excludes multi-day events).
  *
  * @param events - Array of events
  * @param day - Day to filter by
- * @returns Array of events for that day
+ * @returns Array of single-day events for that day
  */
 export function getEventsForDay(events: CalendarEvent[], day: Date): CalendarEvent[] {
-  return events.filter((event) => isSameDay(event.date, day));
+  return events.filter((event) => !isMultiDayEvent(event) && isSameDay(event.date, day));
+}
+
+/**
+ * Get multi-day events that span a specific week.
+ * Events are sorted by visible span in week (longest first), then by start date.
+ *
+ * @param events - Array of events
+ * @param weekDays - Array of days in the week
+ * @returns Array of multi-day events visible in this week, sorted by visible span
+ */
+export function getMultiDayEventsForWeek(
+  events: CalendarEvent[],
+  weekDays: Date[]
+): CalendarEvent[] {
+  if (weekDays.length === 0) return [];
+
+  const weekStart = startOfDay(weekDays[0]);
+  const weekEnd = endOfDay(weekDays[weekDays.length - 1]);
+
+  const multiDayEvents = events.filter((event) => {
+    if (!isMultiDayEvent(event)) return false;
+
+    const eventStart = startOfDay(event.date);
+    const eventEnd = endOfDay(event.endDate!);
+
+    // Event overlaps with week if:
+    // - Event starts before or during week AND
+    // - Event ends during or after week start
+    return !isAfter(eventStart, weekEnd) && !isBefore(eventEnd, weekStart);
+  });
+
+  // Sort by visible span in week (longest first), then by start date (earlier first)
+  return multiDayEvents.sort((a, b) => {
+    const spanA = calculateEventSpanInWeek(a, weekDays);
+    const spanB = calculateEventSpanInWeek(b, weekDays);
+
+    // Primary sort: by visible span (longest first)
+    if (spanB.colSpan !== spanA.colSpan) {
+      return spanB.colSpan - spanA.colSpan;
+    }
+
+    // Secondary sort: by actual start date (earlier first)
+    const startDiff = a.date.getTime() - b.date.getTime();
+    if (startDiff !== 0) {
+      return startDiff;
+    }
+
+    // Tertiary sort: by start column (earlier first)
+    return spanA.startCol - spanB.startCol;
+  });
+}
+
+/**
+ * Calculate the visual span of a multi-day event within a week.
+ *
+ * @param event - Multi-day event
+ * @param weekDays - Array of days in the week
+ * @returns Object with startCol (0-6), colSpan, and whether it continues from/to adjacent weeks
+ */
+export function calculateEventSpanInWeek(
+  event: CalendarEvent,
+  weekDays: Date[]
+): { startCol: number; colSpan: number; continuesBefore: boolean; continuesAfter: boolean } {
+  if (weekDays.length === 0 || !event.endDate) {
+    return { startCol: 0, colSpan: 1, continuesBefore: false, continuesAfter: false };
+  }
+
+  const weekStart = startOfDay(weekDays[0]);
+  const weekEnd = startOfDay(weekDays[weekDays.length - 1]);
+  const eventStart = startOfDay(event.date);
+  const eventEnd = startOfDay(event.endDate);
+
+  // Determine if event continues from previous week or to next week
+  const continuesBefore = isBefore(eventStart, weekStart);
+  const continuesAfter = isAfter(eventEnd, weekEnd);
+
+  // Calculate start column (0-6)
+  let startCol = 0;
+  if (!continuesBefore) {
+    startCol = weekDays.findIndex((day) => isSameDay(day, eventStart));
+    if (startCol === -1) startCol = 0;
+  }
+
+  // Calculate end column
+  let endCol = 6;
+  if (!continuesAfter) {
+    endCol = weekDays.findIndex((day) => isSameDay(day, eventEnd));
+    if (endCol === -1) endCol = 6;
+  }
+
+  const colSpan = endCol - startCol + 1;
+
+  return { startCol, colSpan, continuesBefore, continuesAfter };
 }
 
 /**

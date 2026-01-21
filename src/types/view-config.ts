@@ -25,6 +25,7 @@ export interface BoardViewOptions {
 export interface GanttViewOptions {
   startDateProperty: string;
   endDateProperty: string;
+  groupByProperty?: string;
 }
 
 /**
@@ -32,7 +33,8 @@ export interface GanttViewOptions {
  */
 export interface CalendarViewOptions {
   dateProperty: string;
-  viewMode: 'month' | 'week';
+  endDateProperty?: string; // Optional end date for multi-day events
+  viewMode: 'month' | 'week' | 'day';
 }
 
 /**
@@ -47,6 +49,18 @@ export interface Task {
   startDateProperty: string;
   endDateProperty: string;
   row: number;
+  group?: string;
+}
+
+/**
+ * Task group for Gantt view with grouping
+ */
+export interface TaskGroup {
+  name: string;
+  tasks: Task[];
+  startRow: number;
+  rowCount: number;
+  isCollapsed: boolean;
 }
 
 /**
@@ -57,4 +71,5 @@ export interface CalendarEvent {
   file: TFile;
   title: string;
   date: Date;
+  endDate?: Date; // Optional end date for multi-day events
 }

@@ -23,9 +23,10 @@ export class CalendarBasesView extends ReactBasesView {
    * Get the React component to render
    */
   protected getReactComponent(data: BasesQueryResult): React.ReactElement {
-    // Get options from config
-    const dateProperty = (this.config.get('dateProperty') as string) || 'date';
-    const viewMode = (this.config.get('viewMode') as 'month' | 'week') || 'month';
+    // Get options from config - use same property names as Gantt view
+    const dateProperty = (this.config.get('startDateProperty') as string) || 'start';
+    const endDateProperty = (this.config.get('endDateProperty') as string) || 'end';
+    const viewMode = (this.config.get('viewMode') as 'month' | 'week' | 'day') || 'month';
 
     // Wrap in ErrorBoundary to catch React errors
     return React.createElement(
@@ -35,12 +36,10 @@ export class CalendarBasesView extends ReactBasesView {
         data,
         options: {
           dateProperty,
+          endDateProperty,
           viewMode,
         },
-        onDatePropertyChange: (value: string) => {
-          this.config.set('dateProperty', value);
-        },
-        onViewModeChange: (value: 'month' | 'week') => {
+        onViewModeChange: (value: 'month' | 'week' | 'day') => {
           this.config.set('viewMode', value);
         },
         app: this.app,
@@ -51,15 +50,23 @@ export class CalendarBasesView extends ReactBasesView {
 
   /**
    * Static method to define view options
+   * Uses same property IDs as Gantt view for consistency
    */
   static getViewOptions(): BasesViewOption[] {
     return [
       {
-        id: 'dateProperty',
-        name: 'Date Property',
+        id: 'startDateProperty',
+        name: 'Start Date',
         type: 'property-selector',
         filter: 'date',
-        defaultValue: 'date',
+        defaultValue: 'start',
+      },
+      {
+        id: 'endDateProperty',
+        name: 'End Date',
+        type: 'property-selector',
+        filter: 'date',
+        defaultValue: 'end',
       },
       {
         id: 'viewMode',

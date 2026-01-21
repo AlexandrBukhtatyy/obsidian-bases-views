@@ -5,17 +5,16 @@ import { useCalendarData } from './hooks/useCalendarData';
 import { useEventDrag } from './hooks/useEventDrag';
 import { MonthView } from './components/MonthView';
 import { WeekView } from './components/WeekView';
+import { DayView } from './components/DayView';
 import { ViewSwitcher } from './components/ViewSwitcher';
-import { PropertySelector } from '../../components/shared/PropertySelector';
 import { CalendarViewOptions } from '../../types/view-config';
-import { formatMonthYear, formatWeekRange, previousMonth, nextMonth, previousWeek, nextWeek } from './utils/dateUtils';
+import { formatMonthYear, formatWeekRange, formatFullDate, previousMonth, nextMonth, previousWeek, nextWeek, previousDay, nextDay } from './utils/dateUtils';
 import { startOfWeek, endOfWeek } from 'date-fns';
 
 interface CalendarViewProps {
   data: BasesQueryResult;
   options: CalendarViewOptions;
-  onDatePropertyChange?: (value: string) => void;
-  onViewModeChange?: (value: 'month' | 'week') => void;
+  onViewModeChange?: (value: 'month' | 'week' | 'day') => void;
   app: App;
   hoverParent: HoverParent;
 }
@@ -23,11 +22,11 @@ interface CalendarViewProps {
 /**
  * Main Calendar view component.
  * Displays events on a monthly or weekly calendar with drag-and-drop.
+ * Date properties are configured via options (shared with Gantt view).
  */
 export const CalendarView: React.FC<CalendarViewProps> = ({
   data,
   options,
-  onDatePropertyChange,
   onViewModeChange,
   app,
   hoverParent,
@@ -35,20 +34,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const {
     events,
     dateProperty,
-    setDateProperty,
+    endDateProperty,
     viewMode,
     setViewMode,
     currentDate,
     setCurrentDate,
-  } = useCalendarData(data, app, options.dateProperty, options.viewMode);
+  } = useCalendarData(data, app, options.dateProperty, options.endDateProperty, options.viewMode);
 
-  // Wrap callbacks to trigger both local state and parent callback
-  const handleDatePropertyChange = React.useCallback((value: string) => {
-    setDateProperty(value);
-    onDatePropertyChange?.(value);
-  }, [setDateProperty, onDatePropertyChange]);
-
-  const handleViewModeChange = React.useCallback((value: 'month' | 'week') => {
+  const handleViewModeChange = React.useCallback((value: 'month' | 'week' | 'day') => {
     setViewMode(value);
     onViewModeChange?.(value);
   }, [setViewMode, onViewModeChange]);
@@ -65,24 +58,28 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   );
 
   /**
-   * Navigate to previous period (month or week)
+   * Navigate to previous period (month, week, or day)
    */
   const handlePrevious = () => {
     if (viewMode === 'month') {
       setCurrentDate(previousMonth(currentDate));
-    } else {
+    } else if (viewMode === 'week') {
       setCurrentDate(previousWeek(currentDate));
+    } else {
+      setCurrentDate(previousDay(currentDate));
     }
   };
 
   /**
-   * Navigate to next period (month or week)
+   * Navigate to next period (month, week, or day)
    */
   const handleNext = () => {
     if (viewMode === 'month') {
       setCurrentDate(nextMonth(currentDate));
-    } else {
+    } else if (viewMode === 'week') {
       setCurrentDate(nextWeek(currentDate));
+    } else {
+      setCurrentDate(nextDay(currentDate));
     }
   };
 
@@ -96,22 +93,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   // Format title based on view mode
   const title = viewMode === 'month'
     ? formatMonthYear(currentDate)
-    : formatWeekRange(startOfWeek(currentDate), endOfWeek(currentDate));
+    : viewMode === 'week'
+      ? formatWeekRange(startOfWeek(currentDate), endOfWeek(currentDate))
+      : formatFullDate(currentDate);
 
   return (
     <div className="bv-calendar-view">
       {/* Header with controls */}
       <div className="bv-calendar-header">
-        <div className="bv-calendar-property-selector">
-          <PropertySelector
-            label="Date Property"
-            value={dateProperty}
-            onChange={handleDatePropertyChange}
-            app={app}
-            filter="date"
-          />
-        </div>
-
         <div className="bv-calendar-controls">
           <button
             className="bv-calendar-nav-button"
@@ -155,13 +144,26 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             events={events}
             app={app}
             hoverParent={hoverParent}
+            dateProperty={dateProperty}
+            endDateProperty={endDateProperty}
           />
-        ) : (
+        ) : viewMode === 'week' ? (
           <WeekView
             currentDate={currentDate}
             events={events}
             app={app}
             hoverParent={hoverParent}
+            dateProperty={dateProperty}
+            endDateProperty={endDateProperty}
+          />
+        ) : (
+          <DayView
+            currentDate={currentDate}
+            events={events}
+            app={app}
+            hoverParent={hoverParent}
+            dateProperty={dateProperty}
+            endDateProperty={endDateProperty}
           />
         )}
 

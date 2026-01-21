@@ -40,16 +40,15 @@ export function calculateTaskPosition(
   timelineStart: Date,
   timelineEnd: Date
 ): { left: number; width: number } {
-  const timelineSpan = differenceInDays(timelineEnd, timelineStart);
+  // Add 1 because differenceInDays doesn't include the end date,
+  // but the timeline visually shows both start and end dates (inclusive)
+  const timelineSpan = differenceInDays(timelineEnd, timelineStart) + 1;
   const taskStartOffset = differenceInDays(taskStart, timelineStart);
-  const taskSpan = differenceInDays(taskEnd, taskStart);
-
-  // Ensure minimum 1 day width
-  const effectiveTaskSpan = Math.max(taskSpan, 1);
+  const taskSpan = differenceInDays(taskEnd, taskStart) + 1;
 
   return {
     left: (taskStartOffset / timelineSpan) * 100,
-    width: (effectiveTaskSpan / timelineSpan) * 100,
+    width: (taskSpan / timelineSpan) * 100,
   };
 }
 

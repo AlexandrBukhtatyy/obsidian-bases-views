@@ -1,12 +1,12 @@
 import React from 'react';
 
 interface ViewSwitcherProps {
-  value: 'month' | 'week';
-  onChange: (value: 'month' | 'week') => void;
+  value: 'month' | 'week' | 'day';
+  onChange: (value: 'month' | 'week' | 'day') => void;
 }
 
 /**
- * ViewSwitcher component for toggling between month and week views.
+ * ViewSwitcher component for toggling between month, week, and day views.
  */
 export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({ value, onChange }) => {
   return (
@@ -26,6 +26,14 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({ value, onChange }) =
         onClick={() => onChange('week')}
       >
         Week
+      </button>
+      <button
+        className={`bv-calendar-view-button ${
+          value === 'day' ? 'bv-calendar-view-button-active' : ''
+        }`}
+        onClick={() => onChange('day')}
+      >
+        Day
       </button>
     </div>
   );
