@@ -518,6 +518,28 @@
   @apply bottom-0 rounded-b;
 }
 
+/* Event creation preview */
+.bv-calendar-day-events-column.bv-creating-event {
+  cursor: crosshair;
+}
+
+.bv-calendar-day-creation-preview {
+  @apply absolute rounded;
+  left: 0;
+  right: 0;
+  background: var(--interactive-accent);
+  opacity: 0.6;
+  z-index: 50;
+  pointer-events: none;
+  border: 2px dashed var(--interactive-accent-hover);
+}
+
+.bv-calendar-day-creation-preview-time {
+  @apply text-xs font-medium px-2 py-1;
+  color: var(--text-on-accent);
+  display: block;
+}
+
 /* Empty state */
 .bv-calendar-day-empty {
   @apply absolute inset-0 flex items-center justify-center text-center;

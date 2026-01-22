@@ -234,6 +234,12 @@ export const DayView: React.FC<DayViewProps> = ({
   const dayEvents = getAllEventsForDay(events, currentDate);
   const isToday = isSameDay(currentDate, new Date());
 
+  // State for drag-to-create event
+  const [isCreating, setIsCreating] = React.useState(false);
+  const [creationStart, setCreationStart] = React.useState<number | null>(null);
+  const [creationEnd, setCreationEnd] = React.useState<number | null>(null);
+  const creationStartRef = React.useRef<number | null>(null);
+
   // Separate all-day events from timed events
   const allDayEvents = dayEvents.filter(isAllDayEvent);
   const timedEvents = dayEvents.filter(e => !isAllDayEvent(e));
@@ -254,37 +260,133 @@ export const DayView: React.FC<DayViewProps> = ({
     : null;
 
   /**
-   * Handle double-click to create new event
+   * Convert Y position to snapped minutes (15-minute intervals)
    */
-  const handleDoubleClick = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+  const positionToMinutes = React.useCallback((y: number): number => {
+    const totalMinutes = Math.floor((y / HOUR_HEIGHT) * 60);
+    return Math.floor(totalMinutes / 15) * 15;
+  }, []);
+
+  /**
+   * Convert minutes to Y position
+   */
+  const minutesToPosition = React.useCallback((minutes: number): number => {
+    return (minutes / 60) * HOUR_HEIGHT;
+  }, []);
+
+  /**
+   * Handle mouse down to start creating event
+   */
+  const handleMouseDown = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    // Only handle left click on the grid itself, not on events
+    if (e.button !== 0 || (e.target as HTMLElement).closest('.bv-calendar-day-timed-event')) {
+      return;
+    }
+
     if (!eventsColumnRef.current) return;
 
-    // Get click position relative to the events column
     const rect = eventsColumnRef.current.getBoundingClientRect();
     const scrollTop = eventsColumnRef.current.parentElement?.scrollTop || 0;
     const y = e.clientY - rect.top + scrollTop;
 
-    // Calculate time from position (snap to 15-minute intervals)
-    const totalMinutes = Math.floor((y / HOUR_HEIGHT) * 60);
-    const snappedMinutes = Math.floor(totalMinutes / 15) * 15;
-    const hour = Math.floor(snappedMinutes / 60);
-    const minute = snappedMinutes % 60;
+    const snappedMinutes = positionToMinutes(y);
+    const snappedPos = minutesToPosition(snappedMinutes);
 
-    // Create start and end times
-    let startTime = setMinutes(setHours(currentDate, hour), minute);
-    const endTime = addMinutes(startTime, 30);
+    setIsCreating(true);
+    setCreationStart(snappedPos);
+    setCreationEnd(snappedPos + minutesToPosition(15)); // Minimum 15 minutes
+    creationStartRef.current = snappedMinutes;
 
-    // Show modal to create event
-    const modal = new NewEventModal(
-      app,
-      startTime,
-      endTime,
-      async (name: string, start: Date, end: Date) => {
-        await createNewEvent(app, name, start, end, dateProperty, endDateProperty);
+    e.preventDefault();
+  }, [positionToMinutes, minutesToPosition]);
+
+  /**
+   * Handle mouse move during creation
+   */
+  React.useEffect(() => {
+    if (!isCreating) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!eventsColumnRef.current || creationStartRef.current === null) return;
+
+      const rect = eventsColumnRef.current.getBoundingClientRect();
+      const scrollTop = eventsColumnRef.current.parentElement?.scrollTop || 0;
+      const y = e.clientY - rect.top + scrollTop;
+
+      const snappedMinutes = positionToMinutes(Math.max(0, Math.min(y, 24 * HOUR_HEIGHT)));
+      const startMinutes = creationStartRef.current;
+
+      // Allow dragging both up and down from start point
+      const minMinutes = Math.min(startMinutes, snappedMinutes);
+      const maxMinutes = Math.max(startMinutes, snappedMinutes);
+
+      // Ensure minimum duration of 15 minutes
+      const endMinutes = Math.max(maxMinutes, minMinutes + 15);
+
+      setCreationStart(minutesToPosition(minMinutes));
+      setCreationEnd(minutesToPosition(endMinutes));
+    };
+
+    const handleMouseUp = () => {
+      if (creationStart !== null && creationEnd !== null) {
+        // Calculate times from positions
+        const startMinutes = Math.round((creationStart / HOUR_HEIGHT) * 60);
+        const endMinutes = Math.round((creationEnd / HOUR_HEIGHT) * 60);
+
+        const startHour = Math.floor(startMinutes / 60);
+        const startMinute = startMinutes % 60;
+        const endHour = Math.floor(endMinutes / 60);
+        const endMinute = endMinutes % 60;
+
+        const startTime = setMinutes(setHours(currentDate, startHour), startMinute);
+        const endTime = setMinutes(setHours(currentDate, endHour), endMinute);
+
+        // Show modal to create event
+        const modal = new NewEventModal(
+          app,
+          startTime,
+          endTime,
+          async (name: string, start: Date, end: Date) => {
+            await createNewEvent(app, name, start, end, dateProperty, endDateProperty);
+          }
+        );
+        modal.open();
       }
-    );
-    modal.open();
-  }, [app, currentDate, dateProperty, endDateProperty]);
+
+      setIsCreating(false);
+      setCreationStart(null);
+      setCreationEnd(null);
+      creationStartRef.current = null;
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isCreating, creationStart, creationEnd, currentDate, app, dateProperty, endDateProperty, positionToMinutes, minutesToPosition]);
+
+  // Calculate creation preview dimensions
+  const creationPreview = React.useMemo(() => {
+    if (!isCreating || creationStart === null || creationEnd === null) return null;
+
+    const top = creationStart;
+    const height = creationEnd - creationStart;
+
+    // Format preview time
+    const startMinutes = Math.round((creationStart / HOUR_HEIGHT) * 60);
+    const endMinutes = Math.round((creationEnd / HOUR_HEIGHT) * 60);
+    const startHour = Math.floor(startMinutes / 60);
+    const startMin = startMinutes % 60;
+    const endHour = Math.floor(endMinutes / 60);
+    const endMin = endMinutes % 60;
+
+    const timeText = `${startHour.toString().padStart(2, '0')}:${startMin.toString().padStart(2, '0')} - ${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`;
+
+    return { top, height, timeText };
+  }, [isCreating, creationStart, creationEnd]);
 
   return (
     <div className="bv-calendar-day-view">
@@ -321,8 +423,8 @@ export const DayView: React.FC<DayViewProps> = ({
           {/* Events column with hour lines */}
           <div
             ref={eventsColumnRef}
-            className="bv-calendar-day-events-column"
-            onDoubleClick={handleDoubleClick}
+            className={`bv-calendar-day-events-column ${isCreating ? 'bv-creating-event' : ''}`}
+            onMouseDown={handleMouseDown}
           >
             {/* Hour lines */}
             {hours.map((hour) => (
@@ -357,6 +459,21 @@ export const DayView: React.FC<DayViewProps> = ({
                 endDateProperty={endDateProperty}
               />
             ))}
+
+            {/* Creation preview */}
+            {creationPreview && (
+              <div
+                className="bv-calendar-day-creation-preview"
+                style={{
+                  top: creationPreview.top,
+                  height: Math.max(creationPreview.height, 20),
+                }}
+              >
+                <span className="bv-calendar-day-creation-preview-time">
+                  {creationPreview.timeText}
+                </span>
+              </div>
+            )}
 
             {/* Empty state */}
             {dayEvents.length === 0 && (
