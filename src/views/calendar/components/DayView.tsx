@@ -3,7 +3,7 @@ import { App, HoverParent } from 'obsidian';
 import { CalendarEvent } from '../../../types/view-config';
 import { useHoverPreview } from '../../../hooks/useHoverPreview';
 import { createNoteOpener } from '../../../utils/noteOpener';
-import { isSameDay, getHours, getMinutes, differenceInMinutes, addMinutes, format, setHours, setMinutes } from 'date-fns';
+import { isSameDay, getHours, getMinutes, differenceInMinutes, format, setHours, setMinutes } from 'date-fns';
 import { isDayInEventRange } from '../utils/calendarHelpers';
 import { NewEventModal } from './NewEventModal';
 import { useTimedEventDrag } from '../hooks/useTimedEventDrag';
@@ -21,17 +21,36 @@ interface DayViewProps {
 const HOUR_HEIGHT = 60;
 
 /**
- * Check if an event is an all-day event (multi-day or starts at midnight with no time)
+ * Check if an event is a true all-day event (starts at midnight with no meaningful time)
+ * Events with specific start times that span multiple days are NOT all-day events
  */
 function isAllDayEvent(event: CalendarEvent): boolean {
-  // Multi-day events are treated as all-day
-  if (event.endDate && !isSameDay(event.date, event.endDate)) {
-    return true;
+  const startHours = getHours(event.date);
+  const startMinutes = getMinutes(event.date);
+
+  // If event has a specific start time (not midnight), it's a timed event
+  if (startHours !== 0 || startMinutes !== 0) {
+    return false;
   }
-  // Events at exactly midnight with no duration are considered all-day
-  const hours = getHours(event.date);
-  const minutes = getMinutes(event.date);
-  return hours === 0 && minutes === 0;
+
+  // If it's a multi-day event starting at midnight, check if end is also midnight
+  if (event.endDate) {
+    const endHours = getHours(event.endDate);
+    const endMinutes = getMinutes(event.endDate);
+    // If end time is also midnight (or 23:59), treat as all-day
+    if (endHours === 0 && endMinutes === 0) {
+      return true;
+    }
+    // If end time is 23:59, also treat as all-day
+    if (endHours === 23 && endMinutes === 59) {
+      return true;
+    }
+    // Otherwise it's a timed event that happens to start at midnight
+    return false;
+  }
+
+  // Single event at midnight with no end time - treat as all-day
+  return true;
 }
 
 /**
@@ -500,8 +519,8 @@ async function createNewEvent(
   endDateProperty: string
 ): Promise<void> {
   const fileName = `${name || 'Untitled Event'}.md`;
-  const startDateStr = format(startDate, "yyyy-MM-dd'T'HH:mm");
-  const endDateStr = format(endDate, "yyyy-MM-dd'T'HH:mm");
+  const startDateStr = format(startDate, "yyyy-MM-dd'T'HH:mm:ss");
+  const endDateStr = format(endDate, "yyyy-MM-dd'T'HH:mm:ss");
 
   const frontmatter = `---
 ${dateProperty}: ${startDateStr}
@@ -513,9 +532,7 @@ ${endDateProperty}: ${endDateStr}
 `;
 
   try {
-    const file = await app.vault.create(fileName, frontmatter);
-    const leaf = app.workspace.getLeaf('tab');
-    await leaf.openFile(file);
+    await app.vault.create(fileName, frontmatter);
   } catch (error) {
     console.error('Failed to create new event:', error);
   }

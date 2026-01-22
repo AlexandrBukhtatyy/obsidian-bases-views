@@ -11,79 +11,52 @@
 }
 
 .bv-board-columns {
-  @apply flex gap-3 overflow-x-auto flex-1;
+  @apply flex gap-2 overflow-x-auto flex-1;
   padding-bottom: 1rem;
 }
 
 /* Column Styles - Notion-style */
 .bv-column {
-  @apply flex flex-col rounded-lg;
-  min-width: 17rem;
-  max-width: 17rem;
-  background: transparent;
-}
-
-.bv-column-notion {
+  @apply flex flex-col;
+  min-width: 16rem;
+  max-width: 16rem;
   background: transparent;
 }
 
 .bv-column-header {
-  @apply flex items-center mb-3 pb-2;
-  border: none;
-}
-
-.bv-column-header-notion {
-  @apply gap-2;
-  padding: 0.5rem 0;
+  @apply flex items-center gap-2 mb-2 px-1;
 }
 
 .bv-column-title {
-  @apply text-lg font-semibold m-0;
-  color: var(--text-normal);
+  @apply text-sm font-medium m-0;
+  color: var(--text-muted);
 }
 
 .bv-column-count {
-  @apply text-sm px-2 py-1 rounded;
-  background: var(--interactive-accent);
-  color: var(--background-primary);
+  @apply text-xs px-1.5 py-0.5 rounded;
+  background: rgba(128, 128, 128, 0.3);
+  color: var(--text-muted);
 }
 
 .bv-column-content {
-  @apply flex flex-col gap-2 flex-1 overflow-y-auto;
+  @apply flex flex-col gap-1 flex-1 overflow-y-auto;
   min-height: 5rem;
-  transition: background-color 0.2s ease;
   padding: 0.25rem;
-  border-radius: 0.5rem;
 }
 
 .bv-column-content-hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.bv-column-empty {
-  @apply flex items-center justify-center h-full border-2 border-dashed rounded;
-  min-height: 10rem;
-  border-color: var(--background-modifier-border);
-  opacity: 0.5;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 0.25rem;
 }
 
 /* Card Styles - Notion-style */
 .bv-card {
-  @apply rounded-lg p-3 cursor-pointer;
+  @apply rounded p-2.5 cursor-pointer;
   background: var(--background-secondary);
-  border: 1px solid var(--background-modifier-border);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-}
-
-.bv-card-notion {
-  background: var(--background-secondary);
-  border-color: transparent;
+  transition: background 0.15s ease;
 }
 
 .bv-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
   background: var(--background-modifier-hover);
 }
 
@@ -93,10 +66,10 @@
 
 .bv-card-icon {
   @apply flex-shrink-0;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.125rem;
+  height: 1.125rem;
   color: var(--text-muted);
-  margin-top: 0.125rem;
+  margin-top: 0.0625rem;
 }
 
 .bv-card-icon svg {
@@ -111,51 +84,33 @@
 }
 
 .bv-card-tags {
-  @apply flex flex-wrap gap-1 mt-2;
-}
-
-.bv-card-properties {
-  @apply flex flex-col gap-1;
-}
-
-.bv-card-property {
-  @apply flex gap-2 text-sm;
-}
-
-.bv-card-property-key {
-  @apply font-medium;
-  color: var(--text-muted);
-}
-
-.bv-card-property-value {
-  color: var(--text-normal);
+  @apply flex flex-wrap gap-1 mt-1.5 ml-6;
 }
 
 /* Status Badge Styles - Notion-style */
 .bv-status-badge {
-  @apply inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-medium;
-  border: 1px solid transparent;
+  @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-sm font-medium;
   white-space: nowrap;
 }
 
 .bv-status-badge-sm {
-  @apply px-2 py-0.5 text-xs;
+  @apply px-1.5 py-0.5 text-xs rounded;
   font-weight: 500;
 }
 
 .bv-status-badge-md {
-  @apply px-2.5 py-1 text-sm;
+  @apply px-2.5 py-1 text-sm rounded;
   font-weight: 600;
 }
 
 .bv-status-badge-lg {
-  @apply px-3 py-1.5 text-base;
+  @apply px-3 py-1.5 text-base rounded;
   font-weight: 600;
 }
 
 .bv-badge-count {
-  @apply ml-1.5 px-1.5 py-0.5 rounded text-xs font-semibold;
-  background: rgba(0, 0, 0, 0.15);
+  @apply ml-1 px-1.5 py-0.5 rounded text-xs font-medium;
+  background: rgba(0, 0, 0, 0.2);
   color: inherit;
   min-width: 1.25rem;
   text-align: center;
@@ -170,20 +125,21 @@
   @apply flex sticky top-0 z-10;
   background: var(--background-primary);
   border-bottom: 1px solid var(--background-modifier-border);
+  padding: 0.5rem 0;
 }
 
 .bv-matrix-corner {
-  @apply flex-shrink-0;
-  min-width: 14rem;
-  max-width: 14rem;
-  padding: 0.75rem;
+  @apply flex-shrink-0 flex items-center;
+  min-width: 15rem;
+  max-width: 15rem;
+  padding: 0.5rem 1rem;
   background: var(--background-primary);
 }
 
 .bv-matrix-column-header {
-  @apply flex items-center justify-center p-3;
-  min-width: 17rem;
-  max-width: 17rem;
+  @apply flex items-center p-2;
+  min-width: 15rem;
+  max-width: 15rem;
   background: var(--background-primary);
 }
 
@@ -196,33 +152,43 @@
   border-bottom: 1px solid var(--background-modifier-border);
 }
 
-.bv-matrix-row-collapsed {
-  /* Keep row header visible when collapsed */
+.bv-matrix-row:last-child {
+  border-bottom: none;
+}
+
+.bv-matrix-row-collapsed .bv-matrix-row-cells {
+  display: none;
 }
 
 .bv-matrix-row-cells {
   @apply flex flex-1;
 }
 
-/* Row Header - Notion-style */
+/* Row Header - Notion-style collapsible */
 .bv-row-header {
-  @apply flex items-center gap-2 p-3 sticky left-0 z-5;
-  min-width: 14rem;
-  max-width: 14rem;
+  @apply flex items-center gap-2 py-2 px-3 sticky left-0 cursor-pointer;
+  min-width: 15rem;
+  max-width: 15rem;
   background: var(--background-primary);
   border-right: 1px solid var(--background-modifier-border);
+  transition: background 0.15s ease;
+}
+
+.bv-row-header:hover {
+  background: var(--background-secondary);
 }
 
 .bv-row-header-toggle {
-  @apply flex items-center justify-center cursor-pointer;
-  width: 1.25rem;
-  height: 1.25rem;
+  @apply flex items-center justify-center;
+  width: 1rem;
+  height: 1rem;
   color: var(--text-muted);
   transition: transform 0.15s ease;
 }
 
-.bv-row-header-toggle:hover {
-  color: var(--text-normal);
+.bv-row-header-toggle svg {
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 .bv-row-header-toggle-collapsed {
@@ -235,76 +201,53 @@
 
 /* Grid Cell - Notion-style */
 .bv-grid-cell {
-  @apply flex flex-col gap-2 p-2;
-  min-width: 17rem;
-  max-width: 17rem;
-  min-height: 6rem;
+  @apply flex flex-col gap-1 p-2;
+  min-width: 15rem;
+  max-width: 15rem;
+  min-height: 4rem;
   border-right: 1px solid var(--background-modifier-border);
-  transition: background-color 0.2s ease;
+  background: transparent;
+}
+
+.bv-grid-cell:last-child {
+  border-right: none;
 }
 
 .bv-grid-cell-hover {
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.bv-grid-cell-empty {
-  @apply flex items-center justify-center h-full;
-  min-height: 4rem;
+  background: rgba(255, 255, 255, 0.02);
 }
 
 /* New Group Button - Notion-style */
 .bv-column-new-group,
 .bv-matrix-new-group {
-  @apply flex items-center justify-center p-3;
+  @apply flex items-center p-2;
   min-width: 8rem;
 }
 
 .bv-new-group-btn {
-  @apply px-3 py-2 rounded-md text-sm cursor-pointer;
+  @apply px-3 py-1.5 rounded text-sm cursor-pointer;
   background: transparent;
-  color: var(--text-muted);
-  border: 1px dashed var(--background-modifier-border);
+  color: var(--text-faint);
+  border: none;
   transition: all 0.15s ease;
 }
 
 .bv-new-group-btn:hover {
-  background: var(--background-modifier-hover);
-  color: var(--text-normal);
-  border-color: var(--text-muted);
+  background: var(--background-secondary);
+  color: var(--text-muted);
 }
 
 /* New Page Button - Notion-style */
 .bv-new-page-btn {
-  @apply w-full px-3 py-2 mt-2 rounded-md text-sm cursor-pointer text-left;
+  @apply w-full px-2 py-1.5 rounded text-sm cursor-pointer text-left;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--text-faint);
   border: none;
   transition: all 0.15s ease;
 }
 
 .bv-new-page-btn:hover {
-  background: var(--background-modifier-hover);
-  color: var(--text-normal);
-}
-
-.bv-new-page-btn-compact {
-  @apply py-1.5 text-xs;
-  opacity: 0.7;
-}
-
-.bv-new-page-btn-compact:hover {
-  opacity: 1;
-}
-
-/* Grid Cell Notion variant */
-.bv-grid-cell-notion {
-  background: transparent;
-}
-
-/* Row count badge (deprecated, use StatusBadge with count) */
-.bv-row-count {
-  @apply text-xs px-1.5 py-0.5 rounded;
-  background: rgba(128, 128, 128, 0.2);
+  background: var(--background-secondary);
   color: var(--text-muted);
 }
 
@@ -312,8 +255,8 @@
 .bv-board-columns::-webkit-scrollbar,
 .bv-board-matrix::-webkit-scrollbar,
 .bv-column-content::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 .bv-board-columns::-webkit-scrollbar-track,
@@ -326,7 +269,7 @@
 .bv-board-matrix::-webkit-scrollbar-thumb,
 .bv-column-content::-webkit-scrollbar-thumb {
   background: var(--background-modifier-border);
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 .bv-board-columns::-webkit-scrollbar-thumb:hover,
@@ -338,7 +281,6 @@
 /* Dragging state */
 .bv-card-dragging {
   opacity: 0.5;
-  transform: rotate(3deg);
 }
 
 /* Property Selector styling */
@@ -352,7 +294,7 @@
 }
 
 .bv-property-selector-select {
-  @apply px-3 py-1.5 rounded-md text-sm;
+  @apply px-3 py-1.5 rounded text-sm;
   background: var(--background-secondary);
   color: var(--text-normal);
   border: 1px solid var(--background-modifier-border);
