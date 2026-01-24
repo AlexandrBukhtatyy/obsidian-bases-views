@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { App, BasesQueryResult } from 'obsidian';
 import { adaptBasesData } from '../../../utils/basesDataAdapter';
 import { groupEntriesByProperty, sortGroups } from '../utils/boardHelpers';
@@ -22,6 +22,17 @@ export function useBoardData(
 ) {
   const [groupByProperty, setGroupByProperty] = useState(initialGroupByProperty || 'status');
   const [subGroupByProperty, setSubGroupByProperty] = useState(initialSubGroupByProperty || '');
+
+  // Sync state with props when config changes
+  useEffect(() => {
+    if (initialGroupByProperty) {
+      setGroupByProperty(initialGroupByProperty);
+    }
+  }, [initialGroupByProperty]);
+
+  useEffect(() => {
+    setSubGroupByProperty(initialSubGroupByProperty || '');
+  }, [initialSubGroupByProperty]);
 
   // Transform Bases data to our internal format
   const entries = useMemo(() => {

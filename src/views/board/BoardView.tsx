@@ -7,7 +7,6 @@ import { Column } from './components/Column';
 import { GridCell } from './components/GridCell';
 import { StatusBadge } from './components/StatusBadge';
 import { RowHeader } from './components/RowHeader';
-import { PropertySelector } from '../../components/shared/PropertySelector';
 import { EmptyState } from '../../components/shared/EmptyState';
 import { TextInputModal } from '../../components/shared/TextInputModal';
 import { BoardViewOptions } from '../../types/view-config';
@@ -15,8 +14,6 @@ import { BoardViewOptions } from '../../types/view-config';
 interface BoardViewProps {
   data: BasesQueryResult;
   options: BoardViewOptions;
-  onGroupByChange?: (value: string) => void;
-  onSubGroupByChange?: (value: string) => void;
   app: App;
   hoverParent: HoverParent;
 }
@@ -28,8 +25,6 @@ interface BoardViewProps {
 export const BoardView: React.FC<BoardViewProps> = ({
   data,
   options,
-  onGroupByChange,
-  onSubGroupByChange,
   app,
   hoverParent,
 }) => {
@@ -38,9 +33,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
     groups,
     groupsWithSubGroups,
     groupByProperty,
-    setGroupByProperty,
     subGroupByProperty,
-    setSubGroupByProperty,
   } = useBoardData(data, app, options.groupByProperty, options.subGroupByProperty);
 
   // State for collapsed rows
@@ -58,17 +51,6 @@ export const BoardView: React.FC<BoardViewProps> = ({
       return next;
     });
   }, []);
-
-  // Wrap callbacks to trigger both local state and parent callback
-  const handleGroupByChange = React.useCallback((value: string) => {
-    setGroupByProperty(value);
-    onGroupByChange?.(value);
-  }, [setGroupByProperty, onGroupByChange]);
-
-  const handleSubGroupByChange = React.useCallback((value: string) => {
-    setSubGroupByProperty(value);
-    onSubGroupByChange?.(value);
-  }, [setSubGroupByProperty, onSubGroupByChange]);
 
   const { updateProperty } = usePropertyUpdate(app);
 
@@ -213,26 +195,6 @@ export const BoardView: React.FC<BoardViewProps> = ({
 
     return (
       <div className="bv-board-view bv-board-notion">
-        {/* Header with property selectors */}
-        <div className="bv-board-header">
-          <PropertySelector
-            label="Group by"
-            value={groupByProperty}
-            onChange={handleGroupByChange}
-            app={app}
-            filter="all"
-            placeholder="Select property to group by"
-          />
-          <PropertySelector
-            label="Sub-group by"
-            value={subGroupByProperty}
-            onChange={handleSubGroupByChange}
-            app={app}
-            filter="all"
-            placeholder="(Optional) Select property for sub-groups"
-          />
-        </div>
-
         {/* Matrix layout with drag-and-drop */}
         <DndContext sensors={sensors} onDragEnd={handleDragEnd} collisionDetection={cellOnlyCollision}>
           <div className="bv-board-matrix">
@@ -324,26 +286,6 @@ export const BoardView: React.FC<BoardViewProps> = ({
   // Render as columns if no sub-grouping
   return (
     <div className="bv-board-view bv-board-notion">
-      {/* Header with property selectors */}
-      <div className="bv-board-header">
-        <PropertySelector
-          label="Group by"
-          value={groupByProperty}
-          onChange={handleGroupByChange}
-          app={app}
-          filter="all"
-          placeholder="Select property to group by"
-        />
-        <PropertySelector
-          label="Sub-group by"
-          value={subGroupByProperty}
-          onChange={handleSubGroupByChange}
-          app={app}
-          filter="all"
-          placeholder="(Optional) Select property for sub-groups"
-        />
-      </div>
-
       {/* Board columns with drag-and-drop */}
       <DndContext sensors={sensors} onDragEnd={handleDragEnd} collisionDetection={cellOnlyCollision}>
         <div className="bv-board-columns">

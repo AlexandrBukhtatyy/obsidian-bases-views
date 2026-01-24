@@ -1,4 +1,4 @@
-import { BasesQueryResult, QueryController, BasesViewOption } from 'obsidian';
+import { BasesQueryResult, QueryController } from 'obsidian';
 import * as React from 'react';
 import { ReactBasesView } from '../base/ReactBasesView';
 import { BoardView } from './BoardView';
@@ -20,15 +20,29 @@ export class BoardBasesView extends ReactBasesView {
   }
 
   /**
+   * Extract property name from BasesPropertyId (format: "type.propertyName")
+   */
+  private extractPropertyName(propertyId: unknown): string {
+    if (!propertyId || typeof propertyId !== 'string') return '';
+    // BasesPropertyId format is "type.propertyName" (e.g., "text.status")
+    const parts = propertyId.split('.');
+    return parts.length > 1 ? parts.slice(1).join('.') : propertyId;
+  }
+
+  /**
    * Get the React component to render
    */
   protected getReactComponent(data: BasesQueryResult): React.ReactElement {
-    // Get options from config
-    console.log('BoardBasesView: reading config:', this.config);
-    const groupByProperty = (this.config.get('groupByProperty') as string) || 'status';
-    const subGroupByProperty = (this.config.get('subGroupByProperty') as string) || '';
-    console.log('BoardBasesView: groupByProperty =', groupByProperty);
-    console.log('BoardBasesView: subGroupByProperty =', subGroupByProperty);
+    // Get options from config - property type returns BasesPropertyId like "text.status"
+    const rawGroupBy = this.config.get('groupByProperty');
+    const rawSubGroupBy = this.config.get('subGroupByProperty');
+
+    console.log('BoardBasesView: raw config values:', { rawGroupBy, rawSubGroupBy });
+
+    const groupByProperty = this.extractPropertyName(rawGroupBy) || 'status';
+    const subGroupByProperty = this.extractPropertyName(rawSubGroupBy) || '';
+
+    console.log('BoardBasesView: extracted properties:', { groupByProperty, subGroupByProperty });
 
     // Wrap in ErrorBoundary to catch React errors
     return React.createElement(
@@ -40,16 +54,6 @@ export class BoardBasesView extends ReactBasesView {
           groupByProperty,
           subGroupByProperty,
         },
-        onGroupByChange: (value: string) => {
-          console.log('BoardBasesView: onGroupByChange called with', value);
-          this.config.set('groupByProperty', value);
-          console.log('BoardBasesView: config after set:', this.config.get('groupByProperty'));
-        },
-        onSubGroupByChange: (value: string) => {
-          console.log('BoardBasesView: onSubGroupByChange called with', value);
-          this.config.set('subGroupByProperty', value);
-          console.log('BoardBasesView: config after set:', this.config.get('subGroupByProperty'));
-        },
         app: this.app,
         hoverParent: this,
       })
@@ -59,19 +63,21 @@ export class BoardBasesView extends ReactBasesView {
   /**
    * Static method to define view options
    */
-  static getViewOptions(): BasesViewOption[] {
+  static getViewOptions() {
     return [
       {
-        id: 'groupByProperty',
-        name: 'Group By',
-        type: 'property-selector',
-        defaultValue: 'status',
+        key: 'groupByProperty',
+        displayName: 'Group By',
+        type: 'property',
+        default: 'status',
+        placeholder: 'Select property',
       },
       {
-        id: 'subGroupByProperty',
-        name: 'Sub-Group By',
-        type: 'property-selector',
-        defaultValue: '',
+        key: 'subGroupByProperty',
+        displayName: 'Sub-Group By',
+        type: 'property',
+        default: '',
+        placeholder: 'Select property (optional)',
       },
     ];
   }

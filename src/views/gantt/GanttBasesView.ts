@@ -1,4 +1,4 @@
-import { BasesQueryResult, QueryController, BasesViewOption } from 'obsidian';
+import { BasesQueryResult, QueryController } from 'obsidian';
 import * as React from 'react';
 import { ReactBasesView } from '../base/ReactBasesView';
 import { GanttView } from './GanttView';
@@ -20,12 +20,21 @@ export class GanttBasesView extends ReactBasesView {
   }
 
   /**
+   * Extract property name from BasesPropertyId (format: "type.propertyName")
+   */
+  private extractPropertyName(propertyId: unknown): string {
+    if (!propertyId || typeof propertyId !== 'string') return '';
+    const parts = propertyId.split('.');
+    return parts.length > 1 ? parts.slice(1).join('.') : propertyId;
+  }
+
+  /**
    * Get the React component to render
    */
   protected getReactComponent(data: BasesQueryResult): React.ReactElement {
-    // Get options from config
-    const startDateProperty = (this.config.get('startDateProperty') as string) || 'start';
-    const endDateProperty = (this.config.get('endDateProperty') as string) || 'end';
+    // Get options from config - property type returns BasesPropertyId like "date.start"
+    const startDateProperty = this.extractPropertyName(this.config.get('startDateProperty')) || 'start';
+    const endDateProperty = this.extractPropertyName(this.config.get('endDateProperty')) || 'end';
 
     // Wrap in ErrorBoundary to catch React errors
     return React.createElement(
@@ -52,21 +61,21 @@ export class GanttBasesView extends ReactBasesView {
   /**
    * Static method to define view options
    */
-  static getViewOptions(): BasesViewOption[] {
+  static getViewOptions() {
     return [
       {
-        id: 'startDateProperty',
-        name: 'Start Date',
-        type: 'property-selector',
-        filter: 'date',
-        defaultValue: 'start',
+        key: 'startDateProperty',
+        displayName: 'Start Date',
+        type: 'property',
+        default: 'start',
+        placeholder: 'Select date property',
       },
       {
-        id: 'endDateProperty',
-        name: 'End Date',
-        type: 'property-selector',
-        filter: 'date',
-        defaultValue: 'end',
+        key: 'endDateProperty',
+        displayName: 'End Date',
+        type: 'property',
+        default: 'end',
+        placeholder: 'Select date property',
       },
     ];
   }

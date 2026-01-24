@@ -1,4 +1,4 @@
-import { BasesQueryResult, QueryController, BasesViewOption } from 'obsidian';
+import { BasesQueryResult, QueryController } from 'obsidian';
 import * as React from 'react';
 import { ReactBasesView } from '../base/ReactBasesView';
 import { CalendarView } from './CalendarView';
@@ -20,12 +20,21 @@ export class CalendarBasesView extends ReactBasesView {
   }
 
   /**
+   * Extract property name from BasesPropertyId (format: "type.propertyName")
+   */
+  private extractPropertyName(propertyId: unknown): string {
+    if (!propertyId || typeof propertyId !== 'string') return '';
+    const parts = propertyId.split('.');
+    return parts.length > 1 ? parts.slice(1).join('.') : propertyId;
+  }
+
+  /**
    * Get the React component to render
    */
   protected getReactComponent(data: BasesQueryResult): React.ReactElement {
-    // Get options from config - use same property names as Gantt view
-    const dateProperty = (this.config.get('startDateProperty') as string) || 'start';
-    const endDateProperty = (this.config.get('endDateProperty') as string) || 'end';
+    // Get options from config - property type returns BasesPropertyId like "date.start"
+    const dateProperty = this.extractPropertyName(this.config.get('startDateProperty')) || 'start';
+    const endDateProperty = this.extractPropertyName(this.config.get('endDateProperty')) || 'end';
     const viewMode = (this.config.get('viewMode') as 'month' | 'week' | 'day') || 'month';
 
     // Wrap in ErrorBoundary to catch React errors
@@ -52,27 +61,32 @@ export class CalendarBasesView extends ReactBasesView {
    * Static method to define view options
    * Uses same property IDs as Gantt view for consistency
    */
-  static getViewOptions(): BasesViewOption[] {
+  static getViewOptions() {
     return [
       {
-        id: 'startDateProperty',
-        name: 'Start Date',
-        type: 'property-selector',
-        filter: 'date',
-        defaultValue: 'start',
+        key: 'startDateProperty',
+        displayName: 'Start Date',
+        type: 'property',
+        default: 'start',
+        placeholder: 'Select date property',
       },
       {
-        id: 'endDateProperty',
-        name: 'End Date',
-        type: 'property-selector',
-        filter: 'date',
-        defaultValue: 'end',
+        key: 'endDateProperty',
+        displayName: 'End Date',
+        type: 'property',
+        default: 'end',
+        placeholder: 'Select date property (optional)',
       },
       {
-        id: 'viewMode',
-        name: 'View Mode',
+        key: 'viewMode',
+        displayName: 'View Mode',
         type: 'dropdown',
-        defaultValue: 'month',
+        default: 'month',
+        options: {
+          month: 'Month',
+          week: 'Week',
+          day: 'Day',
+        },
       },
     ];
   }
