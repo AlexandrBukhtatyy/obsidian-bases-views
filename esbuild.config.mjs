@@ -28,11 +28,11 @@ const postcssPlugin = {
         (function() {
           if (typeof document !== 'undefined') {
             const styleEl = document.createElement('style');
-            styleEl.id = 'bases-custom-views-styles';
+            styleEl.id = 'bases-views-styles';
             styleEl.textContent = ${JSON.stringify(result.css)};
 
             // Remove old style if exists
-            const oldStyle = document.getElementById('bases-custom-views-styles');
+            const oldStyle = document.getElementById('bases-views-styles');
             if (oldStyle) {
               oldStyle.remove();
             }
