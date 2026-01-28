@@ -20,6 +20,8 @@ interface WeekViewProps {
   hoverParent: HoverParent;
   dateProperty: string;
   endDateProperty: string;
+  /** Callback when user wants to create a new event */
+  onCreateEvent?: (date: Date) => void;
 }
 
 /**
@@ -34,6 +36,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
   hoverParent,
   dateProperty,
   endDateProperty,
+  onCreateEvent,
 }) => {
   const days = generateWeekDays(currentDate);
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -157,6 +160,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
                 containerRef={containerRef}
                 dateProperty={dateProperty}
                 endDateProperty={endDateProperty}
+                onCreateEvent={onCreateEvent}
               />
             );
           })}

@@ -46,11 +46,11 @@ export abstract class ReactBasesView extends BasesView implements HoverParent {
     console.log('  this.data.data length:', this.data?.data?.length);
     console.log('  this.data.groupedData length:', this.data?.groupedData?.length);
 
-    // Render if we have data
-    if (this.data && this.data.data.length > 0) {
+    // Render if data object exists (even if empty - show empty view)
+    if (this.data) {
       this.render();
     } else {
-      // Show loading message while waiting for data
+      // Show loading message only while waiting for initial data
       this.showLoadingMessage();
     }
   }
@@ -81,9 +81,9 @@ export abstract class ReactBasesView extends BasesView implements HoverParent {
     console.log('  this.data:', this.data);
     console.log('  this.data.data length:', this.data?.data?.length);
 
-    // Don't render if no data available yet
-    if (!this.data || this.data.data.length === 0) {
-      console.warn('ReactBasesView.render() skipped - no data available');
+    // Don't render if data object not available yet
+    if (!this.data) {
+      console.warn('ReactBasesView.render() skipped - no data object');
       this.showLoadingMessage();
       return;
     }
@@ -93,7 +93,7 @@ export abstract class ReactBasesView extends BasesView implements HoverParent {
       this.root = createRoot(this.containerEl);
     }
 
-    // Render React component with current data
+    // Render React component with current data (even if empty)
     const component = this.getReactComponent(this.data);
     this.root.render(component);
   }
@@ -110,11 +110,12 @@ export abstract class ReactBasesView extends BasesView implements HoverParent {
     console.log('  this.data.groupedData length:', this.data?.groupedData?.length);
 
     // Data is in this.data (inherited from BasesView)
-    if (this.data && this.data.data.length > 0) {
-      console.log('  ✓ Data is valid, rendering...');
+    // Render even with empty data to show empty state UI
+    if (this.data) {
+      console.log('  ✓ Data object exists, rendering...');
       this.render();
     } else {
-      console.warn('  ✗ No data available yet');
+      console.warn('  ✗ No data object yet');
       this.showLoadingMessage();
     }
   }

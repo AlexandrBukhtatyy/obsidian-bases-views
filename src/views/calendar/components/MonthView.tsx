@@ -21,6 +21,8 @@ interface MonthViewProps {
   hoverParent: HoverParent;
   dateProperty: string;
   endDateProperty: string;
+  /** Callback when user wants to create a new event */
+  onCreateEvent?: (date: Date) => void;
 }
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -37,6 +39,7 @@ export const MonthView: React.FC<MonthViewProps> = ({
   hoverParent,
   dateProperty,
   endDateProperty,
+  onCreateEvent,
 }) => {
   // Ref for week row container (used for resize calculations)
   const weekRowRef = React.useRef<HTMLDivElement>(null);
@@ -180,6 +183,7 @@ export const MonthView: React.FC<MonthViewProps> = ({
                       containerRef={weekRowRef}
                       dateProperty={dateProperty}
                       endDateProperty={endDateProperty}
+                      onCreateEvent={onCreateEvent}
                     />
                   );
                 })}

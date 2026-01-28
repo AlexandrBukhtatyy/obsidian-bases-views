@@ -16,6 +16,8 @@ interface DayCellProps {
   containerRef: React.RefObject<HTMLElement>;
   dateProperty: string;
   endDateProperty: string;
+  /** Callback when user wants to create a new event on this day */
+  onCreateEvent?: (date: Date) => void;
 }
 
 /**
@@ -32,6 +34,7 @@ export const DayCell: React.FC<DayCellProps> = ({
   containerRef,
   dateProperty,
   endDateProperty,
+  onCreateEvent,
 }) => {
   const dateString = formatDateString(date); // YYYY-MM-DD in local timezone
   const { setNodeRef, isOver } = useDroppable({
@@ -40,12 +43,22 @@ export const DayCell: React.FC<DayCellProps> = ({
 
   const isToday = isDayToday(date);
 
+  const handleClick = React.useCallback((e: React.MouseEvent) => {
+    // Only trigger if clicking directly on cell or events container, not on an event
+    const target = e.target as HTMLElement;
+    if (target.closest('.bv-calendar-event')) return;
+
+    onCreateEvent?.(date);
+  }, [date, onCreateEvent]);
+
   return (
     <div
       ref={setNodeRef}
       className={`bv-calendar-day-cell ${
         !isCurrentMonth ? 'bv-calendar-day-other-month' : ''
       } ${isToday ? 'bv-calendar-day-today' : ''}`}
+      onClick={handleClick}
+      style={{ cursor: onCreateEvent ? 'pointer' : undefined }}
     >
       {showDayNumber && (
         <div className="bv-calendar-day-number">{formatDayNumber(date)}</div>

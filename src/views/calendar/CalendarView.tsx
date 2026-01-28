@@ -8,8 +8,9 @@ import { WeekView } from './components/WeekView';
 import { DayView } from './components/DayView';
 import { ViewSwitcher } from './components/ViewSwitcher';
 import { CalendarDragProvider } from './context/CalendarDragContext';
+import { TextInputModal } from '../../components/shared/TextInputModal';
 import { CalendarViewOptions } from '../../types/view-config';
-import { formatMonthYear, formatWeekRange, formatFullDate, previousMonth, nextMonth, previousWeek, nextWeek, previousDay, nextDay } from './utils/dateUtils';
+import { formatMonthYear, formatWeekRange, formatFullDate, formatDateString, previousMonth, nextMonth, previousWeek, nextWeek, previousDay, nextDay } from './utils/dateUtils';
 import { startOfWeek, endOfWeek } from 'date-fns';
 
 interface CalendarViewProps {
@@ -91,6 +92,35 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     setCurrentDate(new Date());
   };
 
+  /**
+   * Create a new event on the specified date
+   */
+  const handleCreateEvent = React.useCallback((date: Date) => {
+    new TextInputModal(
+      app,
+      'New Event',
+      async (name) => {
+        if (!name) return;
+
+        const timestamp = Date.now();
+        const fileName = `${name} ${timestamp}.md`;
+        const dateStr = formatDateString(date);
+
+        // Build frontmatter with date property
+        const frontmatter = `---\n${dateProperty}: ${dateStr}\n---\n\n`;
+
+        try {
+          const file = await app.vault.create(fileName, frontmatter);
+          const leaf = app.workspace.getLeaf('tab');
+          await leaf.openFile(file);
+        } catch (error) {
+          console.error('Failed to create event:', error);
+        }
+      },
+      'Event name'
+    ).open();
+  }, [app, dateProperty]);
+
   // Format title based on view mode
   const title = viewMode === 'month'
     ? formatMonthYear(currentDate)
@@ -148,6 +178,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             hoverParent={hoverParent}
             dateProperty={dateProperty}
             endDateProperty={endDateProperty}
+            onCreateEvent={handleCreateEvent}
           />
         ) : viewMode === 'week' ? (
           <WeekView
@@ -157,6 +188,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             hoverParent={hoverParent}
             dateProperty={dateProperty}
             endDateProperty={endDateProperty}
+            onCreateEvent={handleCreateEvent}
           />
         ) : (
           <DayView
