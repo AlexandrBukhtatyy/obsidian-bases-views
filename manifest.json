@@ -3,7 +3,7 @@
   "name": "Bases Views",
   "version": "0.1.0",
   "minAppVersion": "1.10.0",
-  "description": "Adds Board, Gantt, and Calendar views to Obsidian Bases",
+  "description": "Adds Board, Gantt, and Calendar views to Bases.",
   "author": "",
   "authorUrl": "",
   "fundingUrl": "",
