@@ -8,7 +8,6 @@ import { Column } from './components/Column';
 import { GridCell } from './components/GridCell';
 import { RowHeader } from './components/RowHeader';
 import { SortableColumnHeader } from './components/SortableColumnHeader';
-import { EmptyState } from '../../components/shared/EmptyState';
 import { TextInputModal } from '../../components/shared/TextInputModal';
 import { BoardViewOptions } from '../../types/view-config';
 import { Card } from './components/Card';
@@ -231,11 +230,6 @@ export const BoardView: React.FC<BoardViewProps> = ({
     );
     modal.open();
   }, [app, groupByProperty]);
-
-  // Show empty state if no entries
-  if (entries.length === 0) {
-    return <EmptyState message="No entries found in this base" icon="📋" />;
-  }
 
   // Properties to exclude from card tags (grouping properties)
   const excludeProperties = [groupByProperty, subGroupByProperty].filter(Boolean) as string[];

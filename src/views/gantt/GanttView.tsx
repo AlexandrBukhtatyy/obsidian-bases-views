@@ -194,7 +194,6 @@ export const GanttView: React.FC<GanttViewProps> = ({
             {tasks.length === 0 && groups.length === 0 && (
               <div className="bv-gantt-empty-overlay">
                 <div className="bv-gantt-empty-message">
-                  <span className="bv-gantt-empty-icon">📊</span>
                   <p>No tasks with valid dates found</p>
                   <p className="bv-gantt-empty-hint">
                     Click on the chart to create your first task, or add{' '}

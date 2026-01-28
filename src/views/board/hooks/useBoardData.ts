@@ -50,7 +50,14 @@ export function useBoardData(
       return allGroups;
     }
 
-    return groupEntriesByProperty(entries, groupByProperty);
+    const grouped = groupEntriesByProperty(entries, groupByProperty);
+
+    // Always ensure 'Uncategorized' group exists so users can create first entry
+    if (!grouped.has('Uncategorized')) {
+      grouped.set('Uncategorized', []);
+    }
+
+    return grouped;
   }, [entries, groupByProperty]);
 
   // Create sub-groups within each group if subGroupByProperty is set
@@ -61,6 +68,12 @@ export function useBoardData(
       if (subGroupByProperty && subGroupByProperty.trim()) {
         // Sub-group the entries within this group
         const subGroups = groupEntriesByProperty(groupEntries, subGroupByProperty);
+
+        // Ensure 'Uncategorized' sub-group exists so users can create entries
+        if (!subGroups.has('Uncategorized')) {
+          subGroups.set('Uncategorized', []);
+        }
+
         const sortedSubGroups = sortGroups(subGroups);
         // Convert sorted array back to Map
         const subGroupsMap = new Map(sortedSubGroups);
