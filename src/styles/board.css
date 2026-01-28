@@ -28,6 +28,16 @@
   @apply flex items-center gap-2 mb-2 px-1;
 }
 
+.bv-column-draggable,
+.bv-sortable-column {
+  cursor: grab;
+}
+
+.bv-column-draggable:active,
+.bv-sortable-column:active {
+  cursor: grabbing;
+}
+
 .bv-column-title {
   @apply text-sm font-medium m-0;
   color: var(--text-muted);

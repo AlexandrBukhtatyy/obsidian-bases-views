@@ -1,9 +1,10 @@
 import { useState, useCallback, useRef } from 'react';
 import { App } from 'obsidian';
-import { differenceInDays, addDays } from 'date-fns';
+import { addDays, eachDayOfInterval } from 'date-fns';
 import { CalendarEvent } from '../../../types/view-config';
 import { usePropertyUpdate } from '../../../hooks/usePropertyUpdate';
 import { formatDateString } from '../utils/dateUtils';
+import { useCalendarDrag } from '../context/CalendarDragContext';
 
 interface UseMultiDayEventDragOptions {
   event: CalendarEvent;
@@ -29,9 +30,11 @@ export function useMultiDayEventDrag({
 }: UseMultiDayEventDragOptions) {
   const [isDragging, setIsDragging] = useState(false);
   const [previewDelta, setPreviewDelta] = useState<number>(0);
+  const [cursorPosition, setCursorPosition] = useState<{ x: number; y: number } | null>(null);
   const dragStartRef = useRef<{ x: number; startDate: Date; endDate: Date } | null>(null);
   const hadMovementRef = useRef(false);
   const { updateProperty } = usePropertyUpdate(app);
+  const { setHighlightedDates, clearHighlights } = useCalendarDrag();
 
   /**
    * Get the width of one day column in pixels
@@ -88,6 +91,14 @@ export function useMultiDayEventDrag({
 
         // Update preview delta for phantom display (no file update during drag)
         setPreviewDelta(currentDeltaDays);
+        // Track cursor position for cursor-following phantom
+        setCursorPosition({ x: moveEvent.clientX, y: moveEvent.clientY });
+
+        // Update highlighted dates for drop zone preview
+        const newStartDate = addDays(dragStartRef.current.startDate, currentDeltaDays);
+        const newEndDate = addDays(dragStartRef.current.endDate, currentDeltaDays);
+        const datesInRange = eachDayOfInterval({ start: newStartDate, end: newEndDate });
+        setHighlightedDates(datesInRange.map(d => formatDateString(d)));
       };
 
       const handleMouseUp = () => {
@@ -102,6 +113,8 @@ export function useMultiDayEventDrag({
 
         setIsDragging(false);
         setPreviewDelta(0);
+        setCursorPosition(null);
+        clearHighlights();
         dragStartRef.current = null;
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
@@ -112,12 +125,13 @@ export function useMultiDayEventDrag({
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
     },
-    [event, updateProperty, getDayWidth, dateProperty, endDateProperty, onDragEnd]
+    [event, updateProperty, getDayWidth, dateProperty, endDateProperty, onDragEnd, setHighlightedDates, clearHighlights]
   );
 
   return {
     isDragging,
     previewDelta,
+    cursorPosition,
     handleDragStart,
     consumeHadMovement,
   };

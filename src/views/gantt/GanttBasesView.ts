@@ -35,6 +35,8 @@ export class GanttBasesView extends ReactBasesView {
     // Get options from config - property type returns BasesPropertyId like "date.start"
     const startDateProperty = this.extractPropertyName(this.config.get('startDateProperty')) || 'start';
     const endDateProperty = this.extractPropertyName(this.config.get('endDateProperty')) || 'end';
+    const groupByProperty = this.extractPropertyName(this.config.get('groupByProperty')) || '';
+    const collapsedGroups = (this.config.get('collapsedGroups') as string[] | undefined) || [];
 
     // Wrap in ErrorBoundary to catch React errors
     return React.createElement(
@@ -45,12 +47,11 @@ export class GanttBasesView extends ReactBasesView {
         options: {
           startDateProperty,
           endDateProperty,
+          groupByProperty,
+          collapsedGroups,
         },
-        onStartDatePropertyChange: (value: string) => {
-          this.config.set('startDateProperty', value);
-        },
-        onEndDatePropertyChange: (value: string) => {
-          this.config.set('endDateProperty', value);
+        onCollapsedGroupsChange: (groups: string[]) => {
+          this.config.set('collapsedGroups', groups);
         },
         app: this.app,
         hoverParent: this,
@@ -76,6 +77,13 @@ export class GanttBasesView extends ReactBasesView {
         type: 'property',
         default: 'end',
         placeholder: 'Select date property',
+      },
+      {
+        key: 'groupByProperty',
+        displayName: 'Group By',
+        type: 'property',
+        default: '',
+        placeholder: 'Select property (optional)',
       },
     ];
   }

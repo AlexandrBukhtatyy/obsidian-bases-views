@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import { App, HoverParent } from 'obsidian';
 import { CalendarEvent } from '../../../types/view-config';
 import { useHoverPreview } from '../../../hooks/useHoverPreview';
@@ -40,7 +41,7 @@ export const MultiDayEvent: React.FC<MultiDayEventProps> = ({
   endDateProperty,
   onInteractionEnd,
 }) => {
-  const { isDragging, previewDelta: dragDelta, handleDragStart, consumeHadMovement: consumeDragMovement } = useMultiDayEventDrag({
+  const { isDragging, cursorPosition, handleDragStart, consumeHadMovement: consumeDragMovement } = useMultiDayEventDrag({
     event,
     app,
     containerRef,
@@ -81,70 +82,6 @@ export const MultiDayEvent: React.FC<MultiDayEventProps> = ({
 
   const isActive = isDragging || isResizing;
 
-  // Calculate phantom position/size during drag or resize
-  // Phantom always shows during interaction, original becomes semi-transparent
-  const phantomData = React.useMemo((): { style: React.CSSProperties; extendsBefore: boolean; extendsAfter: boolean } | null => {
-    if (isDragging) {
-      // During drag, phantom shows at projected position
-      const rawStartCol = startCol + dragDelta;
-      const rawEndCol = rawStartCol + colSpan - 1; // 0-indexed end column
-
-      // Clamp visible range to [0, 6]
-      const clampedStartCol = Math.max(0, rawStartCol);
-      const clampedEndCol = Math.min(6, rawEndCol);
-      const clampedColSpan = Math.max(1, clampedEndCol - clampedStartCol + 1);
-
-      return {
-        style: {
-          gridColumn: `${clampedStartCol + 1} / span ${clampedColSpan}`,
-          gridRow: row + 1,
-        },
-        extendsBefore: rawStartCol < 0,
-        extendsAfter: rawEndCol > 6,
-      };
-    }
-    if (isResizing && resizeDelta) {
-      const { type, days } = resizeDelta;
-
-      if (type === 'start') {
-        // Resize from start: adjust start column and span
-        const rawStartCol = startCol + days;
-        const rawEndCol = startCol + colSpan - 1; // End stays the same
-
-        // Clamp for display within week grid
-        const clampedStartCol = Math.max(0, rawStartCol);
-        const clampedEndCol = Math.min(6, rawEndCol);
-        const clampedSpan = Math.max(1, clampedEndCol - clampedStartCol + 1);
-
-        return {
-          style: {
-            gridColumn: `${clampedStartCol + 1} / span ${clampedSpan}`,
-            gridRow: row + 1,
-          },
-          extendsBefore: rawStartCol < 0,
-          extendsAfter: false,
-        };
-      } else {
-        // Resize from end: adjust span only
-        const rawEndCol = startCol + colSpan - 1 + days;
-
-        // Clamp for display within week grid
-        const clampedEndCol = Math.min(6, rawEndCol);
-        const clampedSpan = Math.max(1, clampedEndCol - startCol + 1);
-
-        return {
-          style: {
-            gridColumn: `${startCol + 1} / span ${clampedSpan}`,
-            gridRow: row + 1,
-          },
-          extendsBefore: false,
-          extendsAfter: rawEndCol > 6,
-        };
-      }
-    }
-    return null;
-  }, [isDragging, dragDelta, isResizing, resizeDelta, startCol, colSpan, row]);
-
   const style: React.CSSProperties = {
     gridColumn: `${startCol + 1} / span ${colSpan}`,
     gridRow: row + 1,
@@ -153,14 +90,6 @@ export const MultiDayEvent: React.FC<MultiDayEventProps> = ({
 
   return (
     <>
-      {/* Phantom element showing projected position/size */}
-      {phantomData && (
-        <div
-          className={`bv-calendar-multi-day-event bv-calendar-event-phantom ${phantomData.extendsBefore ? 'bv-continues-before' : ''} ${phantomData.extendsAfter ? 'bv-continues-after' : ''}`}
-          style={phantomData.style}
-        />
-      )}
-
       <div
         className={`bv-calendar-multi-day-event ${continuesBefore ? 'bv-continues-before' : ''} ${continuesAfter ? 'bv-continues-after' : ''} ${isActive ? 'bv-event-active' : ''}`}
         style={style}
@@ -196,6 +125,23 @@ export const MultiDayEvent: React.FC<MultiDayEventProps> = ({
         />
       )}
       </div>
+
+      {/* Cursor-following drag phantom */}
+      {isDragging && cursorPosition && createPortal(
+        <div
+          className="bv-calendar-drag-phantom"
+          style={{
+            position: 'fixed',
+            left: cursorPosition.x + 12,
+            top: cursorPosition.y + 12,
+            pointerEvents: 'none',
+            zIndex: 10000,
+          }}
+        >
+          <span className="bv-calendar-multi-day-event-title">{event.title}</span>
+        </div>,
+        document.body
+      )}
     </>
   );
 };

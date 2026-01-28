@@ -36,8 +36,9 @@ export class BoardBasesView extends ReactBasesView {
     // Get options from config - property type returns BasesPropertyId like "text.status"
     const rawGroupBy = this.config.get('groupByProperty');
     const rawSubGroupBy = this.config.get('subGroupByProperty');
+    const columnOrder = (this.config.get('columnOrder') as string[] | undefined) || [];
 
-    console.log('BoardBasesView: raw config values:', { rawGroupBy, rawSubGroupBy });
+    console.log('BoardBasesView: raw config values:', { rawGroupBy, rawSubGroupBy, columnOrder });
 
     const groupByProperty = this.extractPropertyName(rawGroupBy) || 'status';
     const subGroupByProperty = this.extractPropertyName(rawSubGroupBy) || '';
@@ -53,9 +54,13 @@ export class BoardBasesView extends ReactBasesView {
         options: {
           groupByProperty,
           subGroupByProperty,
+          columnOrder,
         },
         app: this.app,
         hoverParent: this,
+        onColumnOrderChange: (order: string[]) => {
+          this.config.set('columnOrder', order);
+        },
       })
     );
   }

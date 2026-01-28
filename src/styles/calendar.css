@@ -549,3 +549,17 @@
   color: var(--text-muted);
   font-style: italic;
 }
+
+/* Cursor-following drag phantom */
+.bv-calendar-drag-phantom {
+  @apply px-3 py-1 rounded;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

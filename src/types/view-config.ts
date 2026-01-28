@@ -17,6 +17,7 @@ export interface BoardViewOptions {
   subGroupByProperty?: string; // Optional sub-grouping within columns
   collapsedRows?: string[]; // Rows that should be collapsed by default
   showNewPageButtons?: boolean; // Show/hide "+ New page" buttons
+  columnOrder?: string[]; // Persisted column order for drag-and-drop reordering
 }
 
 /**
@@ -26,6 +27,7 @@ export interface GanttViewOptions {
   startDateProperty: string;
   endDateProperty: string;
   groupByProperty?: string;
+  collapsedGroups?: string[]; // Persisted collapsed group names
 }
 
 /**

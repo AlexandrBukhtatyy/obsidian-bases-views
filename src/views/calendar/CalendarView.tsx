@@ -7,6 +7,7 @@ import { MonthView } from './components/MonthView';
 import { WeekView } from './components/WeekView';
 import { DayView } from './components/DayView';
 import { ViewSwitcher } from './components/ViewSwitcher';
+import { CalendarDragProvider } from './context/CalendarDragContext';
 import { CalendarViewOptions } from '../../types/view-config';
 import { formatMonthYear, formatWeekRange, formatFullDate, previousMonth, nextMonth, previousWeek, nextWeek, previousDay, nextDay } from './utils/dateUtils';
 import { startOfWeek, endOfWeek } from 'date-fns';
@@ -98,6 +99,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       : formatFullDate(currentDate);
 
   return (
+    <CalendarDragProvider>
     <div className="bv-calendar-view">
       {/* Header with controls */}
       <div className="bv-calendar-header">
@@ -172,5 +174,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         </DragOverlay>
       </DndContext>
     </div>
+    </CalendarDragProvider>
   );
 };

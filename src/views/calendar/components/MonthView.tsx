@@ -5,6 +5,7 @@ import { CalendarEvent } from '../../../types/view-config';
 import { DayCell } from './DayCell';
 import { MultiDayEvent } from './MultiDayEvent';
 import { formatDateString } from '../utils/dateUtils';
+import { useCalendarDrag } from '../context/CalendarDragContext';
 import {
   generateMonthDays,
   getEventsForDay,
@@ -39,8 +40,10 @@ export const MonthView: React.FC<MonthViewProps> = ({
 }) => {
   // Ref for week row container (used for resize calculations)
   const weekRowRef = React.useRef<HTMLDivElement>(null);
-  // Track which date is being dragged over for full-column highlighting
+  // Track which date is being dragged over for full-column highlighting (dnd-kit)
   const [dragOverDate, setDragOverDate] = React.useState<string | null>(null);
+  // Get highlighted dates from native drag context
+  const { highlightedDates } = useCalendarDrag();
   // Counter to force re-sort after resize/drag ends
   const [sortVersion, setSortVersion] = React.useState(0);
 
@@ -104,7 +107,8 @@ export const MonthView: React.FC<MonthViewProps> = ({
               {/* Full-column drag-over highlights */}
               {week.map((day, dayIndex) => {
                 const dateStr = formatDateString(day);
-                const isDragOver = dragOverDate === dateStr;
+                // Show highlight for dnd-kit drag OR native mouse drag
+                const isDragOver = dragOverDate === dateStr || highlightedDates.includes(dateStr);
                 if (!isDragOver) return null;
                 return (
                   <div

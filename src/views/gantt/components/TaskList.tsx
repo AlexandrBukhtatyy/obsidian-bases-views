@@ -5,7 +5,6 @@ import { Task, TaskGroup } from '../../../types/view-config';
 interface TaskListProps {
   tasks: Task[];
   groups: TaskGroup[];
-  onNewTask?: () => void;
   onToggleGroup: (groupName: string) => void;
 }
 
@@ -17,7 +16,6 @@ interface TaskListProps {
 export const TaskList: React.FC<TaskListProps> = ({
   tasks,
   groups,
-  onNewTask,
   onToggleGroup,
 }) => {
   const hasGroups = groups.length > 0;
@@ -26,15 +24,6 @@ export const TaskList: React.FC<TaskListProps> = ({
     <div className="bv-gantt-task-list">
       <div className="bv-gantt-task-list-header">
         <div className="bv-gantt-task-list-title">Task</div>
-        {onNewTask && (
-          <button
-            className="bv-gantt-task-list-add-btn"
-            onClick={onNewTask}
-            title="Add new task"
-          >
-            +
-          </button>
-        )}
       </div>
 
       <div className="bv-gantt-task-list-content">

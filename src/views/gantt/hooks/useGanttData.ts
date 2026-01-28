@@ -21,7 +21,8 @@ export function useGanttData(
   app: App,
   initialStartProperty: string,
   initialEndProperty: string,
-  initialGroupByProperty?: string
+  initialGroupByProperty?: string,
+  initialCollapsedGroups?: string[]
 ) {
   const [startDateProperty, setStartDateProperty] = useState(
     initialStartProperty || 'start'
@@ -32,7 +33,9 @@ export function useGanttData(
   const [groupByProperty, setGroupByProperty] = useState(
     initialGroupByProperty || ''
   );
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+    new Set(initialCollapsedGroups || [])
+  );
 
   // Transform Bases data to our internal format
   const entries = useMemo(() => {

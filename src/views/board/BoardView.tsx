@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { App, BasesQueryResult, HoverParent } from 'obsidian';
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, PointerSensor, useSensor, useSensors, pointerWithin, CollisionDetection } from '@dnd-kit/core';
+import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import { useBoardData } from './hooks/useBoardData';
 import { usePropertyUpdate } from '../../hooks/usePropertyUpdate';
 import { Column } from './components/Column';
 import { GridCell } from './components/GridCell';
 import { RowHeader } from './components/RowHeader';
+import { SortableColumnHeader } from './components/SortableColumnHeader';
 import { EmptyState } from '../../components/shared/EmptyState';
 import { TextInputModal } from '../../components/shared/TextInputModal';
 import { BoardViewOptions } from '../../types/view-config';
@@ -16,6 +18,8 @@ interface BoardViewProps {
   options: BoardViewOptions;
   app: App;
   hoverParent: HoverParent;
+  /** Callback to persist column order changes */
+  onColumnOrderChange?: (order: string[]) => void;
 }
 
 /**
@@ -27,6 +31,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
   options,
   app,
   hoverParent,
+  onColumnOrderChange,
 }) => {
   const {
     entries,
@@ -41,6 +46,32 @@ export const BoardView: React.FC<BoardViewProps> = ({
 
   // State for active dragged item
   const [activeId, setActiveId] = React.useState<string | null>(null);
+
+  // State for column order - initialize from persisted options
+  const [columnOrder, setColumnOrder] = React.useState<string[]>(
+    options.columnOrder || []
+  );
+
+  // Sync column order with groups (add new columns, keep order of existing)
+  React.useEffect(() => {
+    const groupTitles = groups.map(([title]) => title);
+    setColumnOrder((prev) => {
+      // Use persisted order as base, or current state
+      const baseOrder = prev.length > 0 ? prev : (options.columnOrder || []);
+      // Keep existing order for known columns, append new ones
+      const existing = baseOrder.filter((col) => groupTitles.includes(col));
+      const newCols = groupTitles.filter((col) => !baseOrder.includes(col));
+      return [...existing, ...newCols];
+    });
+  }, [groups, options.columnOrder]);
+
+  // Get ordered groups based on columnOrder
+  const orderedGroups = React.useMemo(() => {
+    const groupMap = new Map(groups);
+    return columnOrder
+      .filter((col) => groupMap.has(col))
+      .map((col) => [col, groupMap.get(col)!] as [string, typeof groups[0][1]]);
+  }, [groups, columnOrder]);
 
   // Find the active entry for drag overlay
   const activeEntry = React.useMemo(() => {
@@ -95,7 +126,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
   };
 
   /**
-   * Handle drag end - update property when card is dropped
+   * Handle drag end - update property when card is dropped or reorder columns
    */
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveId(null);
@@ -103,14 +134,33 @@ export const BoardView: React.FC<BoardViewProps> = ({
 
     if (!over) return;
 
-    const entryId = active.id as string;
-    const entry = entries.find((e) => e.id === entryId);
+    const activeIdStr = active.id as string;
+    const overIdStr = over.id as string;
 
+    // Check if this is a column reorder (column IDs are prefixed with "column:")
+    if (activeIdStr.startsWith('column:') && overIdStr.startsWith('column:')) {
+      const activeColumn = activeIdStr.replace('column:', '');
+      const overColumn = overIdStr.replace('column:', '');
+
+      if (activeColumn !== overColumn) {
+        setColumnOrder((prev) => {
+          const oldIndex = prev.indexOf(activeColumn);
+          const newIndex = prev.indexOf(overColumn);
+          const newOrder = arrayMove(prev, oldIndex, newIndex);
+          // Persist the new column order
+          onColumnOrderChange?.(newOrder);
+          return newOrder;
+        });
+      }
+      return;
+    }
+
+    // Handle card drop
+    const entry = entries.find((e) => e.id === activeIdStr);
     if (!entry) return;
 
     // Parse drop target ID (format: "group:subgroup" or just "group")
-    const dropId = over.id as string;
-    const [newGroupValue, newSubGroupValue] = dropId.split(':');
+    const [newGroupValue, newSubGroupValue] = overIdStr.split(':');
 
     const currentGroupValue = entry.properties[groupByProperty];
     const currentSubGroupValue = subGroupByProperty
@@ -216,20 +266,27 @@ export const BoardView: React.FC<BoardViewProps> = ({
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} collisionDetection={cellOnlyCollision}>
           {/* Column headers - shared across all sections */}
           <div className="bv-board-header">
-            {groups.map(([groupTitle]) => {
-              // Count total entries in this column across all sub-groups
-              const subGroups = groupsWithSubGroups.get(groupTitle);
-              const columnTotal = subGroups
-                ? Array.from(subGroups.values()).reduce((sum, entries) => sum + entries.length, 0)
-                : 0;
+            <SortableContext
+              items={columnOrder.map((col) => `column:${col}`)}
+              strategy={horizontalListSortingStrategy}
+            >
+              {orderedGroups.map(([groupTitle]) => {
+                // Count total entries in this column across all sub-groups
+                const subGroups = groupsWithSubGroups.get(groupTitle);
+                const columnTotal = subGroups
+                  ? Array.from(subGroups.values()).reduce((sum, entries) => sum + entries.length, 0)
+                  : 0;
 
-              return (
-                <div key={groupTitle} className="bv-board-header-column">
-                  <span className="bv-column-title">{groupTitle}</span>
-                  <span className="bv-column-count">{columnTotal}</span>
-                </div>
-              );
-            })}
+                return (
+                  <SortableColumnHeader
+                    key={groupTitle}
+                    id={`column:${groupTitle}`}
+                    title={groupTitle}
+                    count={columnTotal}
+                  />
+                );
+              })}
+            </SortableContext>
             <div className="bv-board-header-new-group">
               <button className="bv-new-group-btn" onClick={handleNewGroup}>
                 + New group
@@ -243,7 +300,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
               const isCollapsed = collapsedRows.has(subGroupKey);
 
               // Count entries in this section
-              const sectionEntryCount = groups.reduce((sum, [groupTitle]) => {
+              const sectionEntryCount = orderedGroups.reduce((sum, [groupTitle]) => {
                 const subGroups = groupsWithSubGroups.get(groupTitle);
                 return sum + (subGroups?.get(subGroupKey)?.length || 0);
               }, 0);
@@ -264,7 +321,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
                   {/* Section content - columns side by side */}
                   {!isCollapsed && (
                     <div className="bv-board-section-content">
-                      {groups.map(([groupTitle]) => {
+                      {orderedGroups.map(([groupTitle]) => {
                         const subGroups = groupsWithSubGroups.get(groupTitle);
                         const cellEntries = subGroups?.get(subGroupKey) || [];
                         const dropId = `${groupTitle}:${subGroupKey}`;
@@ -310,23 +367,29 @@ export const BoardView: React.FC<BoardViewProps> = ({
       {/* Board columns with drag-and-drop */}
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} collisionDetection={cellOnlyCollision}>
         <div className="bv-board-columns">
-          {groups.map(([groupTitle]) => {
-            const subGroups = groupsWithSubGroups.get(groupTitle);
-            const columnEntries = Array.from(subGroups?.values() || []).flat();
+          <SortableContext
+            items={columnOrder.map((col) => `column:${col}`)}
+            strategy={horizontalListSortingStrategy}
+          >
+            {orderedGroups.map(([groupTitle]) => {
+              const subGroups = groupsWithSubGroups.get(groupTitle);
+              const columnEntries = Array.from(subGroups?.values() || []).flat();
 
-            return (
-              <Column
-                key={groupTitle}
-                title={groupTitle}
-                entries={columnEntries}
-                dropId={groupTitle}
-                app={app}
-                hoverParent={hoverParent}
-                onNewPage={handleNewPage}
-                excludeProperties={excludeProperties}
-              />
-            );
-          })}
+              return (
+                <Column
+                  key={groupTitle}
+                  title={groupTitle}
+                  entries={columnEntries}
+                  dropId={groupTitle}
+                  columnId={`column:${groupTitle}`}
+                  app={app}
+                  hoverParent={hoverParent}
+                  onNewPage={handleNewPage}
+                  excludeProperties={excludeProperties}
+                />
+              );
+            })}
+          </SortableContext>
 
           {/* New group button */}
           <div className="bv-column-new-group">

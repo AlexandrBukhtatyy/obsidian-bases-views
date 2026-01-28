@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import { App, HoverParent } from 'obsidian';
 import { CalendarEvent } from '../../../types/view-config';
 import { useHoverPreview } from '../../../hooks/useHoverPreview';
@@ -28,7 +29,7 @@ export const Event: React.FC<EventProps> = ({
   dateProperty,
   endDateProperty,
 }) => {
-  const { isDragging, previewDelta: dragDelta, handleDragStart, consumeHadMovement: consumeDragMovement } = useMultiDayEventDrag({
+  const { isDragging, cursorPosition, handleDragStart, consumeHadMovement: consumeDragMovement } = useMultiDayEventDrag({
     event,
     app,
     containerRef,
@@ -67,37 +68,6 @@ export const Event: React.FC<EventProps> = ({
 
   const isActive = isDragging || isResizing;
 
-  // Calculate phantom style for resize/drag preview
-  // Phantom always shows during interaction, original becomes semi-transparent
-  const phantomStyle = React.useMemo((): React.CSSProperties | null => {
-    const dayWidth = containerRef.current ? containerRef.current.getBoundingClientRect().width / 7 : 0;
-    if (!dayWidth) return null;
-
-    if (isDragging) {
-      // During drag, phantom shows at projected position
-      return {
-        transform: `translateX(${dragDelta * dayWidth}px)`,
-      };
-    }
-    if (isResizing && resizeDelta) {
-      const { type, days } = resizeDelta;
-
-      if (type === 'start') {
-        // Resize from start: move left and extend width
-        return {
-          transform: `translateX(${days * dayWidth}px)`,
-          width: `calc(100% + ${-days * dayWidth}px)`,
-        };
-      } else {
-        // Resize from end: just extend width to the right
-        return {
-          width: `calc(100% + ${days * dayWidth}px)`,
-        };
-      }
-    }
-    return null;
-  }, [isDragging, dragDelta, isResizing, resizeDelta, containerRef]);
-
   const style: React.CSSProperties = {
     zIndex: isActive ? 999 : undefined,
     position: 'relative',
@@ -105,14 +75,6 @@ export const Event: React.FC<EventProps> = ({
 
   return (
     <>
-      {/* Phantom element showing projected position/size */}
-      {phantomStyle && (
-        <div
-          className="bv-calendar-event bv-calendar-event-phantom"
-          style={{ ...style, ...phantomStyle }}
-        />
-      )}
-
       <div
         className={`bv-calendar-event ${isActive ? 'bv-event-active' : ''}`}
         style={style}
@@ -144,6 +106,23 @@ export const Event: React.FC<EventProps> = ({
         onClick={(e) => e.stopPropagation()}
       />
       </div>
+
+      {/* Cursor-following drag phantom */}
+      {isDragging && cursorPosition && createPortal(
+        <div
+          className="bv-calendar-drag-phantom"
+          style={{
+            position: 'fixed',
+            left: cursorPosition.x + 12,
+            top: cursorPosition.y + 12,
+            pointerEvents: 'none',
+            zIndex: 10000,
+          }}
+        >
+          <span className="bv-calendar-event-title">{event.title}</span>
+        </div>,
+        document.body
+      )}
     </>
   );
 };

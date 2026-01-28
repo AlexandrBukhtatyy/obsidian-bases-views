@@ -11,6 +11,7 @@ import {
   calculateEventSpanInWeek,
 } from '../utils/calendarHelpers';
 import { formatWeekday, formatDateString } from '../utils/dateUtils';
+import { useCalendarDrag } from '../context/CalendarDragContext';
 
 interface WeekViewProps {
   currentDate: Date;
@@ -37,8 +38,10 @@ export const WeekView: React.FC<WeekViewProps> = ({
   const days = generateWeekDays(currentDate);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
-  // Track which date is being dragged over for full-column highlighting
+  // Track which date is being dragged over for full-column highlighting (dnd-kit)
   const [dragOverDate, setDragOverDate] = React.useState<string | null>(null);
+  // Get highlighted dates from native drag context
+  const { highlightedDates } = useCalendarDrag();
   // Counter to force re-sort after resize/drag ends
   const [sortVersion, setSortVersion] = React.useState(0);
 
@@ -83,7 +86,8 @@ export const WeekView: React.FC<WeekViewProps> = ({
         {/* Full-column drag-over highlights */}
         {days.map((day, dayIndex) => {
           const dateStr = formatDateString(day);
-          const isDragOver = dragOverDate === dateStr;
+          // Show highlight for dnd-kit drag OR native mouse drag
+          const isDragOver = dragOverDate === dateStr || highlightedDates.includes(dateStr);
           if (!isDragOver) return null;
           return (
             <div
