@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { App, BasesQueryResult, HoverParent } from 'obsidian';
+import { differenceInDays, addDays, format } from 'date-fns';
 import { useGanttData } from './hooks/useGanttData';
 import { Timeline } from './components/Timeline';
 import { Grid } from './components/Grid';
 import { TaskBar } from './components/TaskBar';
 import { TaskList } from './components/TaskList';
 import { GanttGroupHeader } from './components/GanttGroupHeader';
+import { TextInputModal } from '../../components/shared/TextInputModal';
 import { GanttViewOptions } from '../../types/view-config';
 import { usePropertyUpdate } from '../../hooks/usePropertyUpdate';
 
@@ -83,6 +85,51 @@ export const GanttView: React.FC<GanttViewProps> = ({
   // Ref for the chart container (used for drag-to-group detection)
   const chartRef = React.useRef<HTMLDivElement>(null);
 
+  /**
+   * Handle click on chart to create a new task
+   */
+  const handleChartClick = React.useCallback((e: React.MouseEvent) => {
+    // Only handle direct clicks on the chart or grid, not on task bars
+    const target = e.target as HTMLElement;
+    if (target.closest('.bv-gantt-task-bar') || target.closest('.bv-gantt-group-header')) return;
+
+    if (!chartRef.current) return;
+
+    // Calculate date from click position
+    const rect = chartRef.current.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const chartWidth = rect.width;
+    const totalDays = differenceInDays(timelineEnd, timelineStart) + 1;
+    const dayOffset = Math.floor((clickX / chartWidth) * totalDays);
+    const clickedDate = addDays(timelineStart, dayOffset);
+
+    // Show modal to get task name
+    new TextInputModal(
+      app,
+      'New Task',
+      async (name) => {
+        if (!name) return;
+
+        const timestamp = Date.now();
+        const fileName = `${name} ${timestamp}.md`;
+        const startStr = format(clickedDate, 'yyyy-MM-dd');
+        const endStr = format(addDays(clickedDate, 1), 'yyyy-MM-dd');
+
+        // Build frontmatter with date properties
+        const frontmatter = `---\n${startDateProperty}: ${startStr}\n${endDateProperty}: ${endStr}\n---\n\n`;
+
+        try {
+          const file = await app.vault.create(fileName, frontmatter);
+          const leaf = app.workspace.getLeaf('tab');
+          await leaf.openFile(file);
+        } catch (error) {
+          console.error('Failed to create task:', error);
+        }
+      },
+      'Task name'
+    ).open();
+  }, [app, timelineStart, timelineEnd, startDateProperty, endDateProperty]);
+
   // Calculate chart dimensions
   const hasGroups = groups.length > 0;
   const maxRow = hasGroups
@@ -90,7 +137,7 @@ export const GanttView: React.FC<GanttViewProps> = ({
     : tasks.length > 0
     ? Math.max(...tasks.map((t) => t.row), 0)
     : 0;
-  const chartHeight = (maxRow + 1) * 40;
+  const chartHeight = Math.max((maxRow + 1) * 40, 200); // Min height for empty state
 
   return (
     <div className="bv-gantt-view">
@@ -113,7 +160,8 @@ export const GanttView: React.FC<GanttViewProps> = ({
           <div
             ref={chartRef}
             className="bv-gantt-chart"
-            style={{ height: `${chartHeight}px` }}
+            style={{ height: `${chartHeight}px`, cursor: 'pointer' }}
+            onClick={handleChartClick}
           >
             {/* Background grid */}
             <Grid start={timelineStart} end={timelineEnd} rowCount={maxRow + 1} />
@@ -151,7 +199,7 @@ export const GanttView: React.FC<GanttViewProps> = ({
                   <span className="bv-gantt-empty-icon">📊</span>
                   <p>No tasks with valid dates found</p>
                   <p className="bv-gantt-empty-hint">
-                    Click "+ New Task" to create your first task, or add{' '}
+                    Click on the chart to create your first task, or add{' '}
                     <code>{startDateProperty}</code> and <code>{endDateProperty}</code>{' '}
                     properties to existing notes.
                   </p>
