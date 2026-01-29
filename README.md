@@ -48,6 +48,29 @@ npm run dev
 
 - Obsidian 1.10.0+ (for Bases API)
 
+## Release Process
+
+Releases are automated via GitHub Actions. When a tag is pushed, the workflow builds the plugin and creates a GitHub Release with all necessary files.
+
+### Creating a Release
+
+1. Update version in `manifest.json`, `package.json`, and `versions.json`
+2. Build the project: `npm run build`
+3. Commit changes: `git commit -am "Bump version to X.Y.Z"`
+4. Create tag: `git tag X.Y.Z`
+5. Push with tag: `git push origin master --tags`
+
+GitHub Actions will automatically:
+- Build the plugin
+- Create a release with the tag name
+- Attach `main.js`, `manifest.json`, and `main.css`
+
+### Version Requirements
+
+- Use semantic versioning: `X.Y.Z` (e.g., `0.2.1`)
+- Tag must match version in `manifest.json` exactly
+- No `v` prefix (use `0.2.1`, not `v0.2.1`)
+
 ## License
 
 MIT
