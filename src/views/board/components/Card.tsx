@@ -99,20 +99,6 @@ export const Card: React.FC<CardProps> = ({
       onMouseLeave={handleMouseLeave}
     >
       <div className="bv-card-header">
-        {/* File icon */}
-        <span className="bv-card-icon">
-          <svg
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M3 2.5h7l3 3v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1z" />
-            <path d="M10 2.5v3h3" />
-          </svg>
-        </span>
         <h4 className="bv-card-title">{entry.file.basename}</h4>
       </div>
 
