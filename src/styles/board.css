@@ -68,20 +68,7 @@
 }
 
 .bv-card-header {
-  @apply flex items-start gap-2;
-}
-
-.bv-card-icon {
-  @apply flex-shrink-0;
-  width: 1.125rem;
-  height: 1.125rem;
-  color: var(--text-muted);
-  margin-top: 0.0625rem;
-}
-
-.bv-card-icon svg {
-  width: 100%;
-  height: 100%;
+  @apply flex items-start;
 }
 
 .bv-card-title {
@@ -91,7 +78,7 @@
 }
 
 .bv-card-tags {
-  @apply flex flex-wrap gap-1 mt-1.5 ml-6;
+  @apply flex flex-wrap gap-1 mt-1.5;
 }
 
 /* Status Badge Styles - Notion-style */
